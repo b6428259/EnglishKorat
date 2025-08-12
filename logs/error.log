@@ -1,0 +1,6 @@
+{"level":"error","message":"404 - Not found - /api/v1/appointments/:id - /api/v1/appointments/:id - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 16:33:34"}
+{"level":"error","message":"404 - Not found - /api/v1/me - /api/v1/me - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 16:33:52"}
+{"level":"error","message":"404 - Not found - /api/v1/health - /api/v1/health - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 17:14:16"}
+{"level":"error","message":"404 - Not found - /api/v1/health - /api/v1/health - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 17:14:20"}
+{"level":"error","message":"404 - Not found - /api/v1/health - /api/v1/health - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 17:14:37"}
+{"level":"error","message":"404 - Not found - /api/v1/api/v1/postman-collection.json - /api/v1/api/v1/postman-collection.json - GET - ::1","service":"english-korat-api","timestamp":"2025-08-13 00:40:59"}

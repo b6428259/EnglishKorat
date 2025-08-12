@@ -1,0 +1,261 @@
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 00:00:46"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 00:00:46"}
+{"level":"info","message":"::1 - - [11/Aug/2025:17:02:06 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 00:02:06"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:36:09"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:36:09"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:36:23 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:36:23"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:37:41"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:37:41"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:37:44 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:37:44"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:37:46 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:37:46"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:38:53"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:38:53"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:38:55 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:38:55"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:38:56 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:38:56"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:40:16"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:40:16"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:40:57"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:40:57"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:41:00 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:41:00"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:47:44"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:47:44"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:47:53 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:47:53"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:49:34"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:49:34"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:49:35"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:49:35"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:49:59"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:49:59"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:50:06 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:50:06"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:52:22"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:52:22"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:52:23"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:52:23"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:52:43"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:52:43"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 15:53:05"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 15:53:05"}
+{"level":"info","message":"::1 - - [12/Aug/2025:08:53:08 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 15:53:08"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:16:38 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:16:38"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:16:40 +0000] \"GET /health HTTP/1.1\" 200 84 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:16:40"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:16:56"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:16:56"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:16:59 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:16:59"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:17:00 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:17:00"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:18:30 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:18:30"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:22:11 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:22:11"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:23:43"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:23:43"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:25:38"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:25:38"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:25:49"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:25:49"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:28:09 +0000] \"GET /api/v1/ HTTP/1.1\" 200 215 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:28:09"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:29:43"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:29:43"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:29:44 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:29:44"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:30:04 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:30:04"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:30:58"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:30:58"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:31:07 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:31:07"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:31:16 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:31:16"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:32:30"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:32:30"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:32:34 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:32:34"}
+{"level":"error","message":"404 - Not found - /api/v1/appointments/:id - /api/v1/appointments/:id - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 16:33:34"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:33:34 +0000] \"GET /api/v1/appointments/:id HTTP/1.1\" 404 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:33:34"}
+{"level":"error","message":"404 - Not found - /api/v1/me - /api/v1/me - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 16:33:52"}
+{"level":"info","message":"::1 - - [12/Aug/2025:09:33:52 +0000] \"GET /api/v1/me HTTP/1.1\" 404 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 16:33:52"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 16:59:57"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 16:59:57"}
+{"level":"error","message":"404 - Not found - /api/v1/health - /api/v1/health - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 17:14:16"}
+{"level":"info","message":"::1 - - [12/Aug/2025:10:14:16 +0000] \"GET /api/v1/health HTTP/1.1\" 404 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 17:14:16"}
+{"level":"error","message":"404 - Not found - /api/v1/health - /api/v1/health - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 17:14:20"}
+{"level":"info","message":"::1 - - [12/Aug/2025:10:14:20 +0000] \"GET /api/v1/health HTTP/1.1\" 404 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 17:14:20"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 17:14:34"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 17:14:34"}
+{"level":"error","message":"404 - Not found - /api/v1/health - /api/v1/health - GET - ::1","service":"english-korat-api","timestamp":"2025-08-12 17:14:37"}
+{"level":"info","message":"::1 - - [12/Aug/2025:10:14:37 +0000] \"GET /api/v1/health HTTP/1.1\" 404 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 17:14:37"}
+{"level":"info","message":"::1 - - [12/Aug/2025:10:15:01 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 17:15:01"}
+{"level":"info","message":"::1 - - [12/Aug/2025:10:15:05 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-12 17:15:05"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:55:09"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:55:09"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:55:12"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:55:12"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:55:27"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:55:27"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:56:47"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:56:47"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:56:51"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:56:51"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:56:58"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:56:58"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:57:02"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:57:02"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:57:14"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:57:14"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:57:20"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:57:20"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:57:30"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:57:30"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:57:35"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:57:35"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:57:39"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:57:39"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:57:58"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:57:58"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:58:02"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:58:02"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 19:58:03"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 19:58:03"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:01:56"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:01:56"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:28:23"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:28:23"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:28:31"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:28:31"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:28:41"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:28:41"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:28:44"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:28:44"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:28:52"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:28:52"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:28:56"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:28:56"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:29:31"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:29:31"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:29:35"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:29:35"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:29:51"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:29:51"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:29:54"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:29:54"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:34:28"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:34:28"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:34:59"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:34:59"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:35:53"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:35:53"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:35:57"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:35:57"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:06"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:06"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:08"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:08"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:14"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:14"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:17"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:17"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:26"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:26"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:29"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:29"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:37"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:37"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:42"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:42"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:44"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:44"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:48"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:48"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:52"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:52"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:36:57"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:36:57"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:37:01"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:37:01"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 21:36:15"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 21:36:15"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 21:38:00"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 21:38:00"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:34:47"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:34:47"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:34:52"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:34:52"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:34:57"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:34:57"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:35:08"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:35:08"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:35:13"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:35:13"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:36:01"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:36:01"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:36:06"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:36:06"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:36:17"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:36:17"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:36:21"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:36:21"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:36:29"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:36:29"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:36:35"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:36:35"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:36:40"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:36:40"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:37:00"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:37:00"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:37:04"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:37:04"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:37:11"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:37:11"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:37:16"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:37:16"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:37:26"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:37:26"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:37:44"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:37:44"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:38:01"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:38:01"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:38:16"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:38:16"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:38:17"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:38:17"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:38:28"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:38:28"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:38:31"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:38:31"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:38:44"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:38:44"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:38:49"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:38:49"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:39:01"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:39:01"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:39:03"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:39:03"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:39:14"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:39:14"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:39:18"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:39:18"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:39:41"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:39:41"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:40:30"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:40:30"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:40:36"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:40:36"}
+{"level":"info","message":"::1 - - [12/Aug/2025:17:40:48 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-13 00:40:48"}
+{"level":"info","message":"::1 - - [12/Aug/2025:17:40:52 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-13 00:40:52"}
+{"level":"error","message":"404 - Not found - /api/v1/api/v1/postman-collection.json - /api/v1/api/v1/postman-collection.json - GET - ::1","service":"english-korat-api","timestamp":"2025-08-13 00:40:59"}
+{"level":"info","message":"::1 - - [12/Aug/2025:17:40:59 +0000] \"GET /api/v1/api/v1/postman-collection.json HTTP/1.1\" 404 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-13 00:40:59"}
+{"level":"info","message":"::1 - - [12/Aug/2025:17:41:29 +0000] \"GET /api/v1/postman-collection.json HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-13 00:41:29"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:52:25"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:52:25"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:52:32"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:52:32"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:52:37"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:52:37"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 00:52:38"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 00:52:38"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 01:11:38"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 01:11:38"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 01:12:51"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 01:12:51"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 01:15:23"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 01:15:23"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 01:15:52"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 01:15:52"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 01:16:16"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 01:16:16"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 01:17:17"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 01:17:17"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-13 01:17:31"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-13 01:17:31"}

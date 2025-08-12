@@ -1,0 +1,42 @@
+@startuml
+title Registration & Billing Process
+
+actor Student
+actor Teacher
+actor Admin
+participant System
+
+== Registration ==
+
+Student -> Admin: สอบถามคอร์ส (หน้างาน/โทร)
+Admin -> Student: นัดทดสอบภาษา
+Student -> System: ทำ Grammar Test (แอป)
+Admin -> Student: Speaking/Listening Test
+
+Student -> System: ลงทะเบียนออนไลน์
+note right
+  กรอกข้อมูลส่วนตัว, คอร์ส, ครู, เวลาเรียน,
+  CEFR, คะแนน, โปรโมชัน, ช่องทางรู้จัก
+end note
+
+Student -> System: อัปโหลดเอกสาร (บัตร, สัญญา)
+Student -> System: ยืนยันกฎการลา/ชดเชย
+
+alt ไม่ลงเรียน
+    Admin -> System: อัปเดตสถานะติดตาม
+    System -> Student: ส่งโปรโมชันทาง LINE
+else ลงเรียน
+    == Billing ==
+    Admin -> System: ออกบิล/ใบ Offer
+    note right: บัตรเครดิต +3% (แก้บิล)
+    Student -> Admin: ชำระมัดจำ
+    Admin -> System: บันทึกชำระ
+
+    Admin -> System: จัดกลุ่มเรียน
+    note right: อาจมีส่วนลดถ้ารอนาน
+
+    Admin -> System: ออกบิลจริง
+    note right: แบ่งจ่ายตามคอร์ส (2-3 งวด)
+end
+
+@enduml
