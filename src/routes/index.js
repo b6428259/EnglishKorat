@@ -3,18 +3,9 @@ const express = require('express');
 const router = express.Router();
 
 // ----- Import route modules -----
-const authRoutes = require('./auth');
-const studentRoutes = require('./students');
-const courseRoutes = require('./courses');
-const roomRoutes = require('./rooms');
-const enrollmentRoutes = require('./enrollments');
+
 
 // ----- Register route modules -----
-router.use('/auth', authRoutes);
-router.use('/students', studentRoutes);
-router.use('/courses', courseRoutes);
-router.use('/rooms', roomRoutes);
-router.use('/enrollments', enrollmentRoutes);
 
 // ===== Helpers: scan express routes =====
 function cleanRegexPath(rx) {
@@ -47,7 +38,7 @@ function scanRoutes(stack, base = '') {
 function groupRoutes(routes) {
   const grouped = {};
   for (const r of routes) {
-    const [, base, ...rest] = r.path.split('/'); // ['', 'auth', ...]
+    const [_, base, ...rest] = r.path.split('/'); // ['', 'auth', ...]
     const baseKey = '/' + (base || '');
     const sub = '/' + (rest.join('/') || '');
     for (const m of r.methods) {
@@ -75,7 +66,7 @@ router.get('/', (req, res) => {
     basePath: '/api/v1',
     endpoints, // { "/auth": [{path:"/login",method:"POST"}, ...], ... }
     helpful: {
-      postmanCollection: '/postman-collection.json',
+      postmanCollection: `/postman-collection.json`,
       note: 'Import collection into Postman, set {{baseUrl}} = http://localhost:3000/api/v1',
     },
     timestamp: new Date().toISOString(),

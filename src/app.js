@@ -10,7 +10,7 @@ const { ping } = require('./config/database');  // << ค่อย require ห�
 // Import routes
 const apiRoutes = require('./routes');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
-const logger = require('./utils/logger');
+  const logger = require('./utils/logger');
 
 const app = express();
 

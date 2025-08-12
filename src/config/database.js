@@ -48,7 +48,7 @@ async function ping() {
     await db.raw('SELECT 1');
     return true;
   } catch (e) {
-    console.error('DB ping error:', e && e.message); // eslint-disable-line no-console
+    console.error('DB ping error:', e && e.message); // ชั่วคราว
     return false;
   }
 }
