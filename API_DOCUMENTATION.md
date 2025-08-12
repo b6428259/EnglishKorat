@@ -2,7 +2,7 @@
 
 A comprehensive backend system for managing an English language school with multiple branches.
 
-## Features Implemented (Phase 1)
+## Features Implemented (Phase 1 ✅)
 
 ### 🔐 Authentication System
 - JWT-based authentication
@@ -38,6 +38,27 @@ A comprehensive backend system for managing an English language school with mult
 - The Mall Branch (offline)
 - Technology Branch (offline)  
 - Online Branch (virtual)
+
+## Features Implemented (Phase 2 ✅ - Scheduling & Classes)
+
+### 📅 Class Scheduling System
+- Create and manage class schedules
+- Assign teachers to classes
+- Update class status (scheduled, confirmed, in_progress, completed, cancelled)
+- Handle schedule conflict resolution
+- Room and teacher availability checking
+
+### 📋 Attendance Tracking
+- Mark student attendance (present, absent, excused, late)
+- Generate attendance reports for students and classes
+- Manage leave requests and approvals
+- Leave credit management integration
+
+### 🗓️ Schedule Management
+- View schedules for teachers, students, and rooms
+- Check for scheduling conflicts
+- Suggest available time slots
+- Branch-wide schedule overview
 
 ## API Endpoints
 
@@ -82,6 +103,35 @@ POST   /api/v1/enrollments        # Enroll student (Admin/Owner)
 GET    /api/v1/enrollments        # List enrollments
 GET    /api/v1/enrollments/student/:id # Student's enrollments
 PUT    /api/v1/enrollments/:id    # Update enrollment (Admin/Owner)
+```
+
+### Classes (Phase 2 ✅)
+```
+GET    /api/v1/classes            # List classes with filters
+POST   /api/v1/classes            # Create class (Admin/Owner)
+GET    /api/v1/classes/:id        # Get class details
+PUT    /api/v1/classes/:id        # Update class (Admin/Owner)
+DELETE /api/v1/classes/:id        # Delete class (Admin/Owner)
+```
+
+### Attendance (Phase 2 ✅)
+```
+POST   /api/v1/attendance         # Mark attendance (Teacher/Admin/Owner)
+GET    /api/v1/attendance/class/:classId # Get class attendance
+GET    /api/v1/attendance/student/:studentId # Get student attendance report
+POST   /api/v1/attendance/leave-request # Submit leave request (Student)
+PUT    /api/v1/attendance/leave-request/:id # Process leave request (Admin/Owner)
+GET    /api/v1/attendance/leave-requests # List leave requests
+```
+
+### Schedules (Phase 2 ✅)
+```
+GET    /api/v1/schedules/teacher/:teacherId # Get teacher schedule
+GET    /api/v1/schedules/student/:studentId # Get student schedule
+GET    /api/v1/schedules/room/:roomId # Get room schedule
+GET    /api/v1/schedules/branch/:branchId # Get branch schedule (Admin/Owner)
+POST   /api/v1/schedules/check-conflicts # Check scheduling conflicts (Admin/Owner)
+GET    /api/v1/schedules/available-slots # Get available time slots (Admin/Owner)
 ```
 
 ### System
@@ -175,12 +225,6 @@ JWT_EXPIRES_IN=7d
 ```
 
 ## Next Development Phases
-
-### Phase 2: Scheduling & Classes
-- Class scheduling system
-- Teacher assignment
-- Attendance tracking
-- Schedule conflict resolution
 
 ### Phase 3: Reports & Billing
 - Teaching report submission
