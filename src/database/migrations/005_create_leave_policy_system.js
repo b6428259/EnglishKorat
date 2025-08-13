@@ -31,7 +31,11 @@ exports.up = function(knex) {
       table.timestamps(true, true);
       
       // Ensure unique rules per branch/course combination
-      table.unique(['branch_id', 'course_type', 'course_hours', 'effective_date']);
+      table.unique(
+  ['branch_id', 'course_type', 'course_hours', 'effective_date'],
+  'uniq_leave_rules' // <= ชื่อ index สั้น ๆ
+);
+
     })
     
     // Edit Permissions - Who can modify leave policies
@@ -43,7 +47,10 @@ exports.up = function(knex) {
       table.integer('granted_by').unsigned().notNullable().references('id').inTable('users');
       table.timestamps(true, true);
       
-      table.unique(['policy_rule_id', 'user_id', 'permission_type']);
+      table.unique(
+  ['policy_rule_id', 'user_id', 'permission_type'],
+  'uniq_leave_perms' // <= ชื่อ index สั้น ๆ
+);
     })
     
     // Change History/Audit Trail - Track all modifications
