@@ -32,9 +32,9 @@ exports.up = function(knex) {
       
       // Ensure unique rules per branch/course combination
       table.unique(
-  ['branch_id', 'course_type', 'course_hours', 'effective_date'],
-  'uniq_leave_rules' // <= ชื่อ index สั้น ๆ
-);
+        ['branch_id', 'course_type', 'course_hours', 'effective_date'],
+        'uniq_leave_rules' // <= ชื่อ index สั้น ๆ
+      );
 
     })
     
@@ -48,9 +48,9 @@ exports.up = function(knex) {
       table.timestamps(true, true);
       
       table.unique(
-  ['policy_rule_id', 'user_id', 'permission_type'],
-  'uniq_leave_perms' // <= ชื่อ index สั้น ๆ
-);
+        ['policy_rule_id', 'user_id', 'permission_type'],
+        'uniq_leave_perms' // <= ชื่อ index สั้น ๆ
+      );
     })
     
     // Change History/Audit Trail - Track all modifications
