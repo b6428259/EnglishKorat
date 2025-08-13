@@ -18,7 +18,7 @@ router.get('/', authMiddleware, getClasses);
 // @route   POST /api/v1/classes
 // @desc    Create a new class
 // @access  Private (Admin, Owner)
-router.post('/', authMiddleware, authorize(['admin', 'owner']), validateClass, createClass);
+router.post('/', authMiddleware, authorize('admin', 'owner'), validateClass, createClass);
 
 // @route   GET /api/v1/classes/:id
 // @desc    Get single class by ID
@@ -28,11 +28,11 @@ router.get('/:id', authMiddleware, getClassById);
 // @route   PUT /api/v1/classes/:id
 // @desc    Update class
 // @access  Private (Admin, Owner)
-router.put('/:id', authMiddleware, authorize(['admin', 'owner']), validateClassUpdate, updateClass);
+router.put('/:id', authMiddleware, authorize('admin', 'owner'), validateClassUpdate, updateClass);
 
 // @route   DELETE /api/v1/classes/:id
 // @desc    Delete class
 // @access  Private (Admin, Owner)
-router.delete('/:id', authMiddleware, authorize(['admin', 'owner']), deleteClass);
+router.delete('/:id', authMiddleware, authorize('admin', 'owner'), deleteClass);
 
 module.exports = router;

@@ -139,7 +139,7 @@ const getByIdValidation = [
 router.post(
   '/',
   authMiddleware,
-  authorize(['admin', 'owner']),
+  authorize('admin', 'owner'),
   createLeavePolicyValidation,
   validate,
   createLeavePolicyRule
@@ -148,7 +148,7 @@ router.post(
 router.put(
   '/:id',
   authMiddleware,
-  authorize(['admin', 'owner']),
+  authorize('admin', 'owner'),
   updateLeavePolicyValidation,
   validate,
   updateLeavePolicyRule

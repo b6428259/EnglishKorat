@@ -102,7 +102,7 @@ const createRoomNotificationValidation = [
 router.get(
   '/changes',
   authMiddleware,
-  authorize(['admin', 'owner']),
+  authorize('admin', 'owner'),
   getChangesValidation,
   validate,
   getChangesHistory
@@ -111,7 +111,7 @@ router.get(
 router.post(
   '/revert/:changeId',
   authMiddleware,
-  authorize(['owner']),
+  authorize('owner'),
   revertValidation,
   validate,
   revertLeavePolicyChange
@@ -152,7 +152,7 @@ router.get(
 router.post(
   '/room-notifications',
   authMiddleware,
-  authorize(['admin', 'owner']),
+  authorize('admin', 'owner'),
   createRoomNotificationValidation,
   validate,
   createRoomNotification

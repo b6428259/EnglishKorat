@@ -138,7 +138,7 @@ const createLeavePolicyRule = asyncHandler(async (req, res) => {
       const owners = await trx('users')
         .where('role', 'owner')
         .where('branch_id', branch_id)
-        .select('id', 'first_name', 'last_name');
+        .select('id', 'username');
 
       for (const owner of owners) {
         await trx('leave_policy_notifications').insert({
@@ -146,13 +146,13 @@ const createLeavePolicyRule = asyncHandler(async (req, res) => {
           recipient_id: owner.id,
           notification_type: 'policy_created',
           title: 'New Leave Policy Rule Created',
-          message: `A new leave policy rule "${rule_name}" has been created by ${req.user.first_name} ${req.user.last_name}`,
+          message: `A new leave policy rule "${rule_name}" has been created by ${req.user.username}`,
           metadata: JSON.stringify({
             rule_id: ruleId,
             course_type,
             course_hours,
             leave_credits,
-            created_by: `${req.user.first_name} ${req.user.last_name}`
+            created_by: req.user.username
           })
         });
       }
@@ -167,8 +167,7 @@ const createLeavePolicyRule = asyncHandler(async (req, res) => {
       .select(
         'leave_policy_rules.*',
         'branches.name as branch_name',
-        'users.first_name as created_by_first_name',
-        'users.last_name as created_by_last_name'
+        'users.username as created_by_username'
       )
       .where('leave_policy_rules.id', ruleId)
       .first();
@@ -308,7 +307,7 @@ const updateLeavePolicyRule = asyncHandler(async (req, res) => {
     const owners = await trx('users')
       .where('role', 'owner')
       .where('branch_id', currentRule.branch_id)
-      .select('id', 'first_name', 'last_name');
+      .select('id', 'username');
 
     for (const owner of owners) {
       await trx('leave_policy_notifications').insert({
@@ -316,12 +315,12 @@ const updateLeavePolicyRule = asyncHandler(async (req, res) => {
         recipient_id: owner.id,
         notification_type: 'policy_updated',
         title: 'Leave Policy Rule Updated',
-        message: `Leave policy rule "${currentRule.rule_name}" has been updated by ${req.user.first_name} ${req.user.last_name}. Changes: ${changedFields.join(', ')}`,
+        message: `Leave policy rule "${currentRule.rule_name}" has been updated by ${req.user.username}. Changes: ${changedFields.join(', ')}`,
         metadata: JSON.stringify({
           rule_id: id,
           changed_fields: changedFields,
           change_reason: change_reason.trim(),
-          changed_by: `${req.user.first_name} ${req.user.last_name}`,
+          changed_by: req.user.username,
           old_values: oldValues,
           new_values: { ...oldValues, ...updateFields }
         })
@@ -337,8 +336,7 @@ const updateLeavePolicyRule = asyncHandler(async (req, res) => {
       .select(
         'leave_policy_rules.*',
         'branches.name as branch_name',
-        'users.first_name as created_by_first_name',
-        'users.last_name as created_by_last_name'
+        'users.username as created_by_username'
       )
       .where('leave_policy_rules.id', id)
       .first();
@@ -372,8 +370,7 @@ const getLeavePolicyRules = asyncHandler(async (req, res) => {
     .select(
       'leave_policy_rules.*',
       'branches.name as branch_name',
-      'users.first_name as created_by_first_name',
-      'users.last_name as created_by_last_name'
+      'users.username as created_by_username'
     );
 
   // Apply branch filter based on user role
@@ -434,8 +431,7 @@ const getLeavePolicyRuleById = asyncHandler(async (req, res) => {
     .select(
       'leave_policy_rules.*',
       'branches.name as branch_name',
-      'users.first_name as created_by_first_name',
-      'users.last_name as created_by_last_name'
+      'users.username as created_by_username'
     )
     .where('leave_policy_rules.id', id)
     .first();
@@ -464,8 +460,7 @@ const getLeavePolicyRuleById = asyncHandler(async (req, res) => {
     .join('users', 'leave_policy_permissions.user_id', 'users.id')
     .select(
       'leave_policy_permissions.*',
-      'users.first_name',
-      'users.last_name',
+      'users.username',
       'users.role'
     )
     .where('leave_policy_permissions.policy_rule_id', id);

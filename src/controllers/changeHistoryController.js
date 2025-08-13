@@ -16,11 +16,9 @@ const getChangesHistory = asyncHandler(async (req, res) => {
       'leave_policy_changes.*',
       'leave_policy_rules.rule_name',
       'leave_policy_rules.branch_id',
-      'changed_by_user.first_name as changed_by_first_name',
-      'changed_by_user.last_name as changed_by_last_name',
+      'changed_by_user.username as changed_by_username',
       'changed_by_user.role as changed_by_role',
-      'approved_by_user.first_name as approved_by_first_name',
-      'approved_by_user.last_name as approved_by_last_name'
+      'approved_by_user.username as approved_by_username'
     );
 
   // Apply branch permissions
@@ -170,7 +168,7 @@ const revertLeavePolicyChange = asyncHandler(async (req, res) => {
       .where('branch_id', changeRecord.branch_id)
       .whereIn('role', ['admin', 'owner'])
       .where('id', '!=', req.user.id)
-      .select('id', 'first_name', 'last_name');
+      .select('id', 'username');
 
     for (const recipient of recipients) {
       await trx('leave_policy_notifications').insert({
@@ -178,12 +176,12 @@ const revertLeavePolicyChange = asyncHandler(async (req, res) => {
         recipient_id: recipient.id,
         notification_type: 'policy_reverted',
         title: 'Leave Policy Rule Reverted',
-        message: `Leave policy rule has been reverted by ${req.user.first_name} ${req.user.last_name}. Reason: ${revert_reason.trim()}`,
+        message: `Leave policy rule has been reverted by ${req.user.username}. Reason: ${revert_reason.trim()}`,
         metadata: JSON.stringify({
           rule_id: policyRuleId,
           reverted_change_id: changeId,
           revert_reason: revert_reason.trim(),
-          reverted_by: `${req.user.first_name} ${req.user.last_name}`,
+          reverted_by: req.user.username,
           original_change: changeRecord.field_changes
         })
       });
@@ -233,8 +231,7 @@ const getNotifications = asyncHandler(async (req, res) => {
       'leave_policy_changes.change_type',
       'leave_policy_changes.field_changes',
       'leave_policy_rules.rule_name',
-      'changed_by_user.first_name as changed_by_first_name',
-      'changed_by_user.last_name as changed_by_last_name'
+      'changed_by_user.username as changed_by_username'
     )
     .where('leave_policy_notifications.recipient_id', req.user.id);
 
@@ -335,8 +332,7 @@ const getRoomNotifications = asyncHandler(async (req, res) => {
     .select(
       'room_notifications.*',
       'rooms.room_name',
-      'teacher_users.first_name as teacher_first_name',
-      'teacher_users.last_name as teacher_last_name'
+      'teacher_users.username as teacher_username'
     );
 
   // Apply role-based filters
@@ -428,8 +424,7 @@ const createRoomNotification = asyncHandler(async (req, res) => {
     .select(
       'room_notifications.*',
       'rooms.room_name',
-      'teacher_users.first_name as teacher_first_name',
-      'teacher_users.last_name as teacher_last_name'
+      'teacher_users.username as teacher_username'
     )
     .where('room_notifications.id', notificationId)
     .first();
