@@ -8,6 +8,9 @@ const studentRoutes = require('./students');
 const courseRoutes = require('./courses');
 const roomRoutes = require('./rooms');
 const enrollmentRoutes = require('./enrollments');
+const classRoutes = require('./classes');
+const attendanceRoutes = require('./attendance');
+const scheduleRoutes = require('./schedules');
 
 // ----- Register route modules -----
 router.use('/auth', authRoutes);
@@ -15,6 +18,9 @@ router.use('/students', studentRoutes);
 router.use('/courses', courseRoutes);
 router.use('/rooms', roomRoutes);
 router.use('/enrollments', enrollmentRoutes);
+router.use('/classes', classRoutes);
+router.use('/attendance', attendanceRoutes);
+router.use('/schedules', scheduleRoutes);
 
 // ===== Helpers: scan express routes =====
 function cleanRegexPath(rx) {
