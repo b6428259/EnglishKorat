@@ -69,10 +69,32 @@ const enrollStudent = asyncHandler(async (req, res) => {
     });
   }
 
-  // Calculate leave credits based on course type
+  // Find applicable leave policy rule for this course
+  const applicablePolicyRule = await db('leave_policy_rules')
+    .where('branch_id', course.branch_id)
+    .where('course_type', course.course_type)
+    .where('course_hours', course.hours_total)
+    .where('status', 'active')
+    .where('effective_date', '<=', new Date())
+    .where(function() {
+      this.where('expiry_date', '>=', new Date())
+        .orWhere('expiry_date', null);
+    })
+    .orderBy('effective_date', 'desc')
+    .first();
+
+  // Calculate leave credits based on policy rule or fallback to legacy logic
   let leaveCredits = 0;
-  if (course.course_type.includes('conversation') || course.course_type.includes('4skills')) {
-    leaveCredits = 2; // Group classes allow 2 leaves
+  let policyRuleId = null;
+  
+  if (applicablePolicyRule) {
+    leaveCredits = applicablePolicyRule.leave_credits;
+    policyRuleId = applicablePolicyRule.id;
+  } else {
+    // Fallback to legacy logic for backward compatibility
+    if (course.course_type.includes('conversation') || course.course_type.includes('4skills')) {
+      leaveCredits = 2; // Group classes allow 2 leaves
+    }
   }
 
   // Create enrollment
@@ -85,6 +107,7 @@ const enrollStudent = asyncHandler(async (req, res) => {
     paid_amount: 0,
     leave_credits: leaveCredits,
     used_leaves: 0,
+    leave_policy_rule_id: policyRuleId,
     status: 'active',
     notes
   });

@@ -11,6 +11,8 @@ const enrollmentRoutes = require('./enrollments');
 const classRoutes = require('./classes');
 const attendanceRoutes = require('./attendance');
 const scheduleRoutes = require('./schedules');
+const leavePolicyRoutes = require('./leavePolicies');
+const changeHistoryRoutes = require('./changeHistory');
 
 // ----- Register route modules -----
 router.use('/auth', authRoutes);
@@ -21,6 +23,8 @@ router.use('/enrollments', enrollmentRoutes);
 router.use('/classes', classRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/schedules', scheduleRoutes);
+router.use('/leave-policies', leavePolicyRoutes);
+router.use('/policy', changeHistoryRoutes);
 
 // ===== Helpers: scan express routes =====
 function cleanRegexPath(rx) {

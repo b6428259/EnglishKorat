@@ -301,6 +301,7 @@ const validateClassUpdate = [
 ];
 
 module.exports = {
+  validate: handleValidationErrors, // Export as 'validate' for the new routes
   handleValidationErrors,
   validateUserRegistration,
   validateStudentRegistration,
