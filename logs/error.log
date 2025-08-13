@@ -6,3 +6,29 @@
 {"level":"error","message":"404 - Not found - /api/v1/api/v1/postman-collection.json - /api/v1/api/v1/postman-collection.json - GET - ::1","service":"english-korat-api","timestamp":"2025-08-13 00:40:59"}
 {"level":"error","message":"500 - connect ECONNREFUSED 127.0.0.1:3307 - /api/v1/auth/login - POST - ::1","service":"english-korat-api","timestamp":"2025-08-13 12:19:12"}
 {"level":"error","message":"500 - select `leave_policy_rules`.*, `branches`.`name` as `branch_name`, `users`.`first_name` as `created_by_first_name`, `users`.`last_name` as `created_by_last_name` from `leave_policy_rules` inner join `branches` on `leave_policy_rules`.`branch_id` = `branches`.`id` inner join `users` on `leave_policy_rules`.`created_by` = `users`.`id` where `leave_policy_rules`.`branch_id` = 1 and `leave_policy_rules`.`status` = 'active' order by `leave_policy_rules`.`effective_date` desc limit 20 - SQLITE_ERROR: no such column: users.first_name - /api/v1/leave-policies - GET - ::1","service":"english-korat-api","timestamp":"2025-08-13 12:23:20"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:54"}
+{"level":"error","message":"404 - Not found - /api/v1/nonexistent-endpoint - /api/v1/nonexistent-endpoint - GET - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:55"}
+{"level":"error","message":"400 - Unexpected token 'i', \"invalid json data\" is not valid JSON - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:55"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:55"}
