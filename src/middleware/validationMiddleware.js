@@ -168,10 +168,147 @@ const validateClass = [
   handleValidationErrors
 ];
 
+// Attendance validation
+const validateAttendance = [
+  body('class_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid class ID is required'),
+  
+  body('attendances')
+    .isArray({ min: 1 })
+    .withMessage('Attendances array is required and must not be empty'),
+  
+  body('attendances.*.student_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid student ID is required for each attendance record'),
+  
+  body('attendances.*.status')
+    .isIn(['present', 'absent', 'excused', 'late'])
+    .withMessage('Status must be one of: present, absent, excused, late'),
+  
+  body('attendances.*.notes')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Notes must not exceed 500 characters'),
+  
+  handleValidationErrors
+];
+
+// Leave request validation
+const validateLeaveRequest = [
+  body('class_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid class ID is required'),
+  
+  body('reason')
+    .notEmpty()
+    .withMessage('Reason is required')
+    .isLength({ max: 500 })
+    .withMessage('Reason must not exceed 500 characters'),
+  
+  handleValidationErrors
+];
+
+// Leave request process validation
+const validateLeaveRequestProcess = [
+  body('status')
+    .isIn(['approved', 'rejected'])
+    .withMessage('Status must be either approved or rejected'),
+  
+  body('admin_notes')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Admin notes must not exceed 500 characters'),
+  
+  handleValidationErrors
+];
+
+// Schedule conflict check validation
+const validateConflictCheck = [
+  body('class_date')
+    .isDate()
+    .withMessage('Valid class date is required'),
+  
+  body('start_time')
+    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+    .withMessage('Start time must be in HH:MM:SS format'),
+  
+  body('end_time')
+    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+    .withMessage('End time must be in HH:MM:SS format'),
+  
+  body('teacher_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Teacher ID must be a positive integer'),
+  
+  body('room_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Room ID must be a positive integer'),
+  
+  body('exclude_class_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Exclude class ID must be a positive integer'),
+  
+  handleValidationErrors
+];
+
+// Update class validation (for partial updates)
+const validateClassUpdate = [
+  body('teacher_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Teacher ID must be a positive integer'),
+  
+  body('room_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Room ID must be a positive integer'),
+  
+  body('class_date')
+    .optional()
+    .isDate()
+    .withMessage('Valid class date is required'),
+  
+  body('start_time')
+    .optional()
+    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+    .withMessage('Start time must be in HH:MM:SS format'),
+  
+  body('end_time')
+    .optional()
+    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+    .withMessage('End time must be in HH:MM:SS format'),
+  
+  body('hours')
+    .optional()
+    .isFloat({ min: 0.5, max: 8 })
+    .withMessage('Hours must be between 0.5 and 8'),
+  
+  body('status')
+    .optional()
+    .isIn(['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled'])
+    .withMessage('Status must be one of: scheduled, confirmed, in_progress, completed, cancelled'),
+  
+  body('notes')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('Notes must not exceed 1000 characters'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   validateUserRegistration,
   validateStudentRegistration,
   validateCourse,
-  validateClass
+  validateClass,
+  validateAttendance,
+  validateLeaveRequest,
+  validateLeaveRequestProcess,
+  validateConflictCheck,
+  validateClassUpdate
 };

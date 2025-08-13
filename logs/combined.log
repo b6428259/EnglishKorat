@@ -273,3 +273,65 @@
 {"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:19:27:53 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 400 222 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 19:27:53"}
 {"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:19:27:53 +0000] \"GET /api/v1/students HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 19:27:53"}
 {"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:19:27:53 +0000] \"GET /api/v1/courses HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 19:27:53"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:10:56"}
+{"level":"info","message":"📚 English Korat School API - Environment: test","service":"english-korat-api","timestamp":"2025-08-12 20:10:56"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:10:56 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:10:56"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:10:56 +0000] \"GET /api/v1 HTTP/1.1\" 200 - \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:10:56"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:10:56 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 400 222 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:10:56"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:10:56 +0000] \"GET /api/v1/students HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:10:56"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:10:56 +0000] \"GET /api/v1/courses HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:10:56"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:24:01"}
+{"level":"info","message":"📚 English Korat School API - Environment: test","service":"english-korat-api","timestamp":"2025-08-12 20:24:01"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:24:01 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:24:01"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:24:01 +0000] \"GET /api/v1 HTTP/1.1\" 200 - \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:24:01"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:24:01 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 400 222 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:24:01"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:24:01 +0000] \"GET /api/v1/students HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:24:01"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:24:01 +0000] \"GET /api/v1/courses HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:24:01"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:24:41"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-12 20:24:41"}
+{"level":"info","message":"::1 - - [12/Aug/2025:20:25:02 +0000] \"GET /api/v1 HTTP/1.1\" 200 1914 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:02"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"📚 English Korat School API - Environment: test","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/classes HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"POST /api/v1/classes HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"PUT /api/v1/classes/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"DELETE /api/v1/classes/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"POST /api/v1/attendance HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/attendance/class/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/attendance/student/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"POST /api/v1/attendance/leave-request HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/attendance/leave-requests HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/schedules/teacher/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/schedules/student/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/schedules/room/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/schedules/branch/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"POST /api/v1/schedules/check-conflicts HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"GET /api/v1/schedules/available-slots?branch_id=1&class_date=2024-01-15 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"POST /api/v1/classes HTTP/1.1\" 401 49 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"POST /api/v1/attendance HTTP/1.1\" 401 49 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:25:53 +0000] \"POST /api/v1/schedules/check-conflicts HTTP/1.1\" 401 49 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:25:53"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"📚 English Korat School API - Environment: test","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /health HTTP/1.1\" 200 82 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1 HTTP/1.1\" 200 - \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 400 222 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/students HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/courses HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/classes HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"POST /api/v1/classes HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"PUT /api/v1/classes/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"DELETE /api/v1/classes/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"POST /api/v1/attendance HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/attendance/class/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/attendance/student/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"POST /api/v1/attendance/leave-request HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/attendance/leave-requests HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/schedules/teacher/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/schedules/student/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/schedules/room/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/schedules/branch/1 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"POST /api/v1/schedules/check-conflicts HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:34 +0000] \"GET /api/v1/schedules/available-slots?branch_id=1&class_date=2024-01-15 HTTP/1.1\" 401 63 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:34"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:35 +0000] \"POST /api/v1/classes HTTP/1.1\" 401 49 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:35"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:35 +0000] \"POST /api/v1/attendance HTTP/1.1\" 401 49 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:35"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Aug/2025:20:26:35 +0000] \"POST /api/v1/schedules/check-conflicts HTTP/1.1\" 401 49 \"-\" \"-\"","service":"english-korat-api","timestamp":"2025-08-12 20:26:35"}
