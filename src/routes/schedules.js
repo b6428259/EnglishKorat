@@ -29,16 +29,16 @@ router.get('/room/:roomId', authMiddleware, getRoomSchedule);
 // @route   GET /api/v1/schedules/branch/:branchId
 // @desc    Get branch schedule overview
 // @access  Private (Admin, Owner)
-router.get('/branch/:branchId', authMiddleware, authorize(['admin', 'owner']), getBranchSchedule);
+router.get('/branch/:branchId', authMiddleware, authorize('admin', 'owner'), getBranchSchedule);
 
 // @route   POST /api/v1/schedules/check-conflicts
 // @desc    Check for scheduling conflicts
 // @access  Private (Admin, Owner)
-router.post('/check-conflicts', authMiddleware, authorize(['admin', 'owner']), validateConflictCheck, checkSchedulingConflicts);
+router.post('/check-conflicts', authMiddleware, authorize('admin', 'owner'), validateConflictCheck, checkSchedulingConflicts);
 
 // @route   GET /api/v1/schedules/available-slots
 // @desc    Get available time slots
 // @access  Private (Admin, Owner)
-router.get('/available-slots', authMiddleware, authorize(['admin', 'owner']), getAvailableTimeSlots);
+router.get('/available-slots', authMiddleware, authorize('admin', 'owner'), getAvailableTimeSlots);
 
 module.exports = router;
