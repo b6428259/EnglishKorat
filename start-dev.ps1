@@ -1,5 +1,5 @@
 # --- config ---
-$PemPath         = "C:\Users\iooon\Desktop\ekorat\EKLS.pem"
+$PemPath         = "./EKLS.pem"
 $Ec2User         = "ubuntu"
 $Ec2Host         = "ec2-54-254-53-52.ap-southeast-1.compute.amazonaws.com"
 $RdsHost         = "ekorat-db.c96wcau48ea0.ap-southeast-1.rds.amazonaws.com"
