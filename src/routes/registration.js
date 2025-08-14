@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/auth');
+const { authMiddleware: protect, authorize } = require('../middleware/authMiddleware');
 
 const {
   registerPreTest,

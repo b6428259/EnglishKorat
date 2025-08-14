@@ -5,7 +5,7 @@
 
 const StudentRegistrationService = require('../services/StudentRegistrationService');
 const GroupFormationService = require('../services/GroupFormationService');
-const asyncHandler = require('../middleware/asyncHandler');
+const asyncHandler = require('../utils/asyncHandler');
 const { body, validationResult } = require('express-validator');
 const { db } = require('../config/database');
 
