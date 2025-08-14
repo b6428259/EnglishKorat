@@ -177,27 +177,7 @@ exports.up = function(knex) {
       table.boolean('active').defaultTo(true);
       table.timestamps(true, true);
     })
-    
-    // Document Management for Student Registration
-    .createTable('student_documents', (table) => {
-      table.increments('id').primary();
-      table.integer('student_id').unsigned().notNullable().references('id').inTable('students').onDelete('CASCADE');
-      table.integer('registration_id').unsigned().references('id').inTable('student_registrations');
-      table.enum('document_type', [
-        'id_card', 'contract', 'photo', 'certificate', 
-        'test_result', 'payment_slip', 'other'
-      ]).notNullable();
-      table.string('original_name', 255).notNullable();
-      table.string('file_path', 500).notNullable();
-      table.string('file_size', 20);
-      table.string('mime_type', 100);
-      table.datetime('uploaded_at').notNullable();
-      table.integer('uploaded_by').unsigned().references('id').inTable('users');
-      table.boolean('verified').defaultTo(false);
-      table.datetime('verified_at');
-      table.integer('verified_by').unsigned().references('id').inTable('users');
-      table.timestamps(true, true);
-    })
+
     
     // Enhanced Teacher Salary System
     .createTable('teacher_salaries', (table) => {
@@ -279,7 +259,6 @@ exports.down = function(knex) {
     .dropTableIfExists('ebooks')
     .dropTableIfExists('student_progress')
     .dropTableIfExists('teacher_salaries')
-    .dropTableIfExists('student_documents')
     .dropTableIfExists('notification_templates')
     .dropTableIfExists('line_groups')
     .dropTableIfExists('notifications')
