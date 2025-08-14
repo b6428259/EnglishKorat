@@ -637,3 +637,5 @@
 {"level":"info","message":"::1 - - [14/Aug/2025:10:17:09 +0000] \"GET /api/v1/courses HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 17:17:09"}
 {"level":"info","message":"::1 - - [14/Aug/2025:11:01:50 +0000] \"GET /api/v1/schedules/available-slots HTTP/1.1\" 401 49 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 18:01:50"}
 {"level":"info","message":"::1 - - [14/Aug/2025:11:02:06 +0000] \"GET /api/v1/schedules/branch/1 HTTP/1.1\" 401 49 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 18:02:06"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 20:17:22"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 20:17:22"}
