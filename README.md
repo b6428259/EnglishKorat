@@ -278,16 +278,10 @@ This software is proprietary and confidential. Unauthorized copying, distributio
 
 ```bash
 # Complete setup
-npm install && npm run migrate && npm run seed && npm run dev
-
-# Reset database
-npm run migrate:rollback && npm run migrate && npm run seed
-
-# Run tests
-npm test
+npm install 
 
 # Start production
-npm start
+./start-dev.ps1
 ```
 
 For detailed documentation, see the [docs/](docs/) directory.
