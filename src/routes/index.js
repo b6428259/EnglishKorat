@@ -13,6 +13,7 @@ const attendanceRoutes = require('./attendance');
 const scheduleRoutes = require('./schedules');
 const leavePolicyRoutes = require('./leavePolicies');
 const changeHistoryRoutes = require('./changeHistory');
+const registrationRoutes = require('./registration');
 
 // ----- Register route modules -----
 router.use('/auth', authRoutes);
@@ -25,6 +26,7 @@ router.use('/attendance', attendanceRoutes);
 router.use('/schedules', scheduleRoutes);
 router.use('/leave-policies', leavePolicyRoutes);
 router.use('/policy', changeHistoryRoutes);
+router.use('/registration', registrationRoutes);
 
 // ===== Helpers: scan express routes =====
 function cleanRegexPath(rx) {
