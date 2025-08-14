@@ -1,263 +1,293 @@
-# English Korat Language School API
+# English Korat Language School Management System
 
-## Phase 3: Advanced Leave Policy Management System
+A comprehensive, multi-branch school management system for English language education with advanced features including student enrollment, course management, scheduling, leave policies, financial tracking, and real-time notifications.
 
-A comprehensive school management system API with advanced leave policy management, change tracking, and notification system.
+## 📋 Project Overview
 
-### 🚀 New Features in Phase 3
+The English Korat Language School Management System is a robust backend API designed to handle all aspects of language school operations across multiple branches. The system supports four user roles (Student, Teacher, Admin, Owner) and provides comprehensive functionality for course management, scheduling, attendance tracking, financial management, and advanced leave policy management.
 
-#### 1. Dynamic Leave Policy Rules Management
-- **Configurable Leave Policies**: Replace hardcoded leave credits with dynamic, configurable rules
-- **Course-Specific Rules**: Different leave policies for different course types and durations
-- **Effective Date Management**: Rules with start and end dates to prevent retroactive impacts
-- **Multi-Branch Support**: Branch-specific policy rules
+### 🏗️ System Architecture
 
-#### 2. Advanced Edit Permissions & Security
-- **Role-Based Access Control**: Only authorized users (admin/owner) can modify leave policies
-- **Permission Management**: Granular permissions for viewing, editing, and approving changes
-- **Change Reason Requirement**: All modifications require a detailed reason
-- **Validation Rules**: Prevents negative values and invalid configurations
+**Technology Stack:**
+- **Backend**: Node.js with Express.js framework
+- **Database**: MySQL 8.0+ with Knex.js ORM
+- **Authentication**: JWT-based with role-based access control
+- **Caching**: Redis for session management and caching
+- **Testing**: Jest with Supertest for API testing
+- **Documentation**: Auto-generated API docs with Postman collections
 
-#### 3. Comprehensive Change Tracking & Audit Trail
-- **Complete History**: Track all create, update, delete, and revert operations
-- **Before/After Values**: Store old and new values for every change
-- **Change Summaries**: Human-readable descriptions of what changed
-- **Revert Capability**: Owners can revert changes to previous states
+**Multi-Branch Support:**
+- The Mall Branch (offline)
+- Technology Branch (offline)  
+- Online Branch (virtual)
 
-#### 4. Real-Time Notification System
-- **Instant Notifications**: Immediate alerts to owners when policies change
-- **Detailed Information**: Who changed what, when, and why
-- **Metadata Support**: Rich notification data with links and context
-- **Read/Unread Tracking**: Mark notifications as read/unread
+### 🚀 Key Features
 
-#### 5. Room Usage Notification System
-- **Teacher Alerts**: Popup notifications for room availability and conflicts
-- **Real-Time Updates**: Live notifications about room changes
-- **Schedule Integration**: Notifications tied to actual class schedules
-- **Conflict Prevention**: Alerts about room booking conflicts
+#### Phase 1 ✅ - Core System
+- **Authentication & Security**: JWT-based auth with RBAC, password encryption
+- **User Management**: Comprehensive profiles for students, teachers, and staff
+- **Course Management**: 8 course types including conversation, skills, and test prep
+- **Room & Facility Management**: Availability tracking and conflict resolution
+- **Enrollment System**: Student course enrollment with payment tracking
 
-### 📊 Database Schema
+#### Phase 2 ✅ - Scheduling & Classes
+- **Class Management**: Individual session scheduling and management
+- **Attendance Tracking**: Digital attendance with makeup session support
+- **Schedule Coordination**: Conflict detection and room optimization
+- **Leave System**: Student leave requests with credit management
 
-#### Core Tables Added:
-- **`leave_policy_rules`**: Dynamic leave policy configurations
-- **`leave_policy_permissions`**: Edit permissions management
-- **`leave_policy_changes`**: Complete audit trail
-- **`leave_policy_notifications`**: Policy change notifications
-- **`room_notifications`**: Room usage alerts
+#### Phase 3 ✅ - Advanced Leave Policy Management
+- **Dynamic Leave Policies**: Configurable rules with course-specific settings
+- **Change Tracking & Audit**: Complete history with revert capabilities
+- **Real-Time Notifications**: Instant alerts for policy changes
+- **Room Usage Alerts**: Live notifications for availability and conflicts
 
-### 🔧 API Endpoints
+## 🛠️ Installation Guide
 
-#### Leave Policy Management
-```
-POST   /api/v1/leave-policies              Create new leave policy rule
-PUT    /api/v1/leave-policies/:id          Update leave policy rule (requires reason)
-GET    /api/v1/leave-policies              List all leave policy rules
-GET    /api/v1/leave-policies/:id          Get specific leave policy rule
-```
+### Prerequisites
 
-#### Change History & Audit
-```
-GET    /api/v1/policy/changes              Get change history
-POST   /api/v1/policy/revert/:changeId     Revert a change (owners only)
-```
+**System Requirements:**
+- Node.js 18.0+ 
+- MySQL 8.0+
+- Redis (for caching and queue management)
+- Git
 
-#### Notifications
-```
-GET    /api/v1/policy/notifications        Get user notifications
-PUT    /api/v1/policy/notifications/:id/read    Mark notification as read
-PUT    /api/v1/policy/notifications/mark-all-read    Mark all as read
+**Development Tools:**
+- npm 9.0+ or yarn
+- Postman (for API testing)
+- MySQL Workbench (optional, for database management)
+
+### Step-by-Step Installation
+
+#### 1. Clone the Repository
+```bash
+git clone https://github.com/b6428259/EnglishKorat.git
+cd EnglishKorat
 ```
 
-#### Room Notifications
-```
-GET    /api/v1/policy/room-notifications   Get room notifications
-POST   /api/v1/policy/room-notifications   Create room notification
-```
-
-### 💡 Usage Examples
-
-#### Creating a Leave Policy Rule
-```json
-POST /api/v1/leave-policies
-{
-  "rule_name": "ระเบียบการลาคอร์ส 60 ชั่วโมง กลุ่มเล็ก",
-  "course_type": "group_small",
-  "course_hours": 60,
-  "max_students": 5,
-  "leave_credits": 2,
-  "effective_date": "2024-01-01",
-  "conditions": {
-    "advance_notice_hours": 24,
-    "makeup_classes_allowed": true
-  }
-}
+#### 2. Install Dependencies
+```bash
+npm install
 ```
 
-#### Updating a Policy (with reason)
-```json
-PUT /api/v1/leave-policies/1
-{
-  "leave_credits": 3,
-  "change_reason": "เพิ่มสิทธิ์การลาจาก 2 เป็น 3 ครั้ง ตามนโยบายใหม่ของสถาบัน"
-}
+#### 3. Environment Configuration
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env file with your configuration
+nano .env
 ```
 
-#### Creating Room Notification
-```json
-POST /api/v1/policy/room-notifications
-{
-  "notification_type": "room_conflict",
-  "title": "ห้องเรียนขัดแย้ง",
-  "message": "ห้อง A1 มีการจองซ้อนกันในเวลา 14:00-16:00",
-  "room_id": 1,
-  "teacher_id": 5,
-  "schedule_time": "2024-01-15T14:00:00Z",
-  "metadata": {
-    "conflicting_classes": [10, 15],
-    "suggested_alternatives": [2, 3]
-  }
-}
-```
-
-### 🔒 Security Features
-
-#### Permission Levels
-- **Owner**: Full access to all branches, can revert changes
-- **Admin**: Can edit policies in their branch, cannot revert
-- **Teacher**: Read-only access to relevant policies
-- **Student**: No access to policy management
-
-#### Validation Rules
-- No negative values for leave credits or prices
-- Effective dates cannot be in the past
-- Overlapping policies are prevented
-- Change reasons are mandatory and validated
-
-#### Concurrency Control
-- Optimistic locking prevents simultaneous edits
-- Version checking ensures data consistency
-- Conflict detection and resolution
-
-### 📈 Benefits
-
-#### For Institute Owners
-- **Complete Visibility**: See all policy changes with reasons
-- **Quality Control**: Approve or revert any changes
-- **Audit Compliance**: Complete trail of all modifications
-- **Flexible Policies**: Adapt rules to business needs
-
-#### For Administrators
-- **Streamlined Management**: Easy policy updates with validation
-- **Accountability**: All changes tracked with reasons
-- **Real-time Updates**: Instant notifications of changes
-- **Error Prevention**: Built-in validation and conflict detection
-
-#### For Teachers
-- **Transparency**: Clear understanding of leave policies
-- **Real-time Alerts**: Room conflict notifications
-- **Improved Planning**: Better schedule management
-
-#### For Students
-- **Consistent Experience**: Standardized leave policies
-- **Fair Treatment**: Transparent and auditable rules
-- **Better Service**: Reduced conflicts and confusion
-
-### 🚀 Getting Started
-
-1. **Run Migrations**
-   ```bash
-   npm run migrate
-   ```
-
-2. **Seed Initial Data** (optional)
-   ```bash
-   npm run seed
-   ```
-
-3. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-
-4. **Access API Documentation**
-   - Visit `http://localhost:3000/api/v1` for endpoint listing
-   - Download Postman collection from `http://localhost:3000/api/v1/postman-collection.json`
-
-### 📝 Migration Notes
-
-#### Backward Compatibility
-- Existing enrollments continue to work with legacy leave credits
-- New enrollments automatically use applicable policy rules
-- Gradual migration path from hardcoded to dynamic rules
-
-#### Data Migration Strategy
-1. **Phase 1**: Install new schema alongside existing system
-2. **Phase 2**: Create default policy rules matching current logic
-3. **Phase 3**: Migrate existing enrollments to use policy rules
-4. **Phase 4**: Remove legacy hardcoded logic
-
-### 🔧 Configuration
-
-#### Environment Variables
+**Required Environment Variables:**
 ```env
-# Database settings remain the same
+# Database Configuration
 DB_CLIENT=mysql2
 DB_HOST=127.0.0.1
 DB_PORT=3307
-# ... other existing variables
+DB_USER=admin
+DB_PASSWORD=adminEKLS1234
+DB_NAME=englishkorat
 
-# Optional: Notification settings
-NOTIFICATION_EMAIL_ENABLED=true
-NOTIFICATION_LINE_ENABLED=true
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key
+JWT_EXPIRES_IN=24h
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Redis Configuration (optional)
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+
+# AWS S3 Configuration (for file uploads)
+AWS_ACCESS_KEY_ID=your-aws-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret
+AWS_REGION=ap-southeast-1
+AWS_S3_BUCKET=your-bucket-name
 ```
 
-### 🧪 Testing
-
-#### Run All Tests
+#### 4. Database Setup
 ```bash
+# Run migrations
+npm run migrate
+
+# Seed initial data (optional)
+npm run seed
+```
+
+#### 5. Start Development Server
+```bash
+# Development with auto-reload
+npm run dev
+
+# Production
+npm start
+```
+
+#### 6. Verify Installation
+- API Documentation: `http://localhost:3000/api/v1`
+- Health Check: `http://localhost:3000/health`
+- Postman Collection: `http://localhost:3000/api/v1/postman-collection.json`
+
+## 🌐 Environment Setup
+
+### Development Environment
+```bash
+# Install development dependencies
+npm install --include=dev
+
+# Run with nodemon for auto-reload
+npm run dev
+
+# Run tests
 npm test
+
+# Run linting
+npm run lint
 ```
 
-#### Run Specific Test Suites
+### Staging Environment
 ```bash
-npm test -- --testPathPattern=phase3
+# Set NODE_ENV
+export NODE_ENV=staging
+
+# Use staging database
+DB_NAME=englishkorat_staging
+
+# Start with PM2 (recommended)
+pm2 start ecosystem.config.js --env staging
 ```
 
-#### Test Coverage
-- Unit tests for all new controllers
-- Integration tests for policy workflows
-- Validation tests for security features
-- Performance tests for notification system
+### Production Environment
+```bash
+# Set NODE_ENV
+export NODE_ENV=production
 
-### 📊 Monitoring & Analytics
+# Use production database
+DB_NAME=englishkorat_production
 
-#### Key Metrics Tracked
-- Policy change frequency by branch/user
-- Notification delivery rates
-- Room conflict resolution times
-- Leave policy utilization rates
+# Start with PM2
+pm2 start ecosystem.config.js --env production
+```
 
-#### Audit Reports Available
-- Monthly policy change summaries
-- User activity reports
-- Branch policy compliance reports
-- System usage analytics
+## 📚 API Documentation Preview
+
+### Core Endpoints
+
+**Authentication**
+```http
+POST /api/v1/auth/register     # User registration
+POST /api/v1/auth/login        # User login
+GET  /api/v1/auth/profile      # Get user profile
+PUT  /api/v1/auth/profile      # Update profile
+```
+
+**Course Management**
+```http
+GET  /api/v1/courses           # List courses
+POST /api/v1/courses           # Create course (Admin/Owner)
+PUT  /api/v1/courses/:id       # Update course
+GET  /api/v1/courses/:id/groups # Get course groups
+```
+
+**Leave Policy Management**
+```http
+GET  /api/v1/leave-policies    # List leave policies
+POST /api/v1/leave-policies    # Create policy (Admin/Owner)
+PUT  /api/v1/leave-policies/:id # Update policy
+GET  /api/v1/policy/changes    # Get change history
+```
+
+**Complete API Documentation**: [docs/api/README.md](docs/api/README.md)
+
+## 🔄 Development Workflow
+
+### Git Workflow
+```bash
+# Create feature branch
+git checkout -b feature/your-feature-name
+
+# Make changes and commit
+git add .
+git commit -m "feat: add your feature"
+
+# Push and create pull request
+git push origin feature/your-feature-name
+```
+
+### Code Standards
+- Follow ESLint configuration
+- Use Prettier for code formatting
+- Write tests for new features
+- Update documentation for API changes
+
+### Testing Guidelines
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm test -- --testPathPattern=unit
+npm test -- --testPathPattern=integration
+
+# Run with coverage
+npm test -- --coverage
+```
+
+## 🤝 Contributing Guidelines
+
+### Before Contributing
+1. Read the [development guidelines](docs/development/README.md)
+2. Check existing issues and pull requests
+3. Follow the code style guide
+4. Write tests for new features
+
+### Pull Request Process
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests and documentation
+5. Ensure all tests pass
+6. Submit a pull request
+
+### Code Review Checklist
+- [ ] Code follows style guidelines
+- [ ] Tests are included and passing
+- [ ] Documentation is updated
+- [ ] No breaking changes (or properly documented)
+- [ ] Performance impact is considered
+
+## 📄 License Information
+
+**Proprietary License**
+
+© 2024 English Korat Language School. All rights reserved.
+
+This software is proprietary and confidential. Unauthorized copying, distribution, or modification is strictly prohibited.
+
+**Contact Information:**
+- Email: admin@englishkorat.com
+- Phone: +66 44-123456
+- Address: The Mall Korat, Nakhon Ratchasima, Thailand
 
 ---
 
-### 📞 Support
+## 🚀 Quick Start Commands
 
-For questions or issues with the leave policy management system:
-- Review API documentation at `/api/v1`
-- Check audit logs in the admin interface
-- Contact system administrators for policy questions
+```bash
+# Complete setup
+npm install && npm run migrate && npm run seed && npm run dev
 
-### 🔄 Version History
+# Reset database
+npm run migrate:rollback && npm run migrate && npm run seed
 
-- **v1.0.0**: Initial release with basic attendance and enrollment
-- **v2.0.0**: Enhanced course and schedule management
-- **v3.0.0**: Advanced leave policy management system (current)
+# Run tests
+npm test
 
-### 📄 License
+# Start production
+npm start
+```
 
-This project is proprietary software for English Korat Language School.
+For detailed documentation, see the [docs/](docs/) directory.
