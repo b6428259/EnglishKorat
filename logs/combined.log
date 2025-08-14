@@ -542,3 +542,76 @@
 {"level":"error","message":"404 - Not found - /api/v1/nonexistent-endpoint - /api/v1/nonexistent-endpoint - GET - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:55"}
 {"level":"error","message":"400 - Unexpected token 'i', \"invalid json data\" is not valid JSON - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:55"}
 {"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-13 18:56:55"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:06"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:07"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:07"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:07"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:07"}
+{"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-14 04:44:07"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 04:45:48"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 04:45:48"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:45:55 +0000] \"GET /api/v1/ HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:45:55"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:45:58 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 534 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:45:58"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:46:16 +0000] \"GET /api/v1 HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:46:16"}
+{"level":"error","message":"404 - Not found - /postman-collection.json - /postman-collection.json - GET - ::1","service":"english-korat-api","timestamp":"2025-08-14 04:46:22"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:46:22 +0000] \"GET /postman-collection.json HTTP/1.1\" 404 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:46:22"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:46:30 +0000] \"GET /api/v1/postman-collection.json HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:46:30"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:47:47 +0000] \"GET /api/v1/students HTTP/1.1\" 401 63 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:47:47"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:49:12 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 534 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:49:12"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:50:09 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 534 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:50:09"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:51:58 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 534 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:51:58"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:52:17 +0000] \"GET /api/v1/auth/profile HTTP/1.1\" 401 63 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:52:17"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:53:20 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 534 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:53:20"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:53:45 +0000] \"GET /api/v1/auth/profile HTTP/1.1\" 200 331 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:53:45"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:53:59 +0000] \"GET /api/v1/students HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:53:59"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:54:23 +0000] \"GET /api/v1/students/1 HTTP/1.1\" 401 63 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:54:23"}
+{"level":"error","message":"500 - Unexpected token 'W', \"Works in h\"... is not valid JSON - /api/v1/students/1 - GET - ::1","service":"english-korat-api","timestamp":"2025-08-14 04:54:32"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:54:32 +0000] \"GET /api/v1/students/1 HTTP/1.1\" 500 382 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:54:32"}
+{"level":"error","message":"500 - Unexpected token 'U', \"University\"... is not valid JSON - /api/v1/students/2 - GET - ::1","service":"english-korat-api","timestamp":"2025-08-14 04:55:00"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:55:00 +0000] \"GET /api/v1/students/2 HTTP/1.1\" 500 382 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:55:00"}
+{"level":"error","message":"500 - Unexpected token 'W', \"Works in h\"... is not valid JSON - /api/v1/students/1 - GET - ::1","service":"english-korat-api","timestamp":"2025-08-14 04:55:09"}
+{"level":"info","message":"::1 - - [13/Aug/2025:21:55:09 +0000] \"GET /api/v1/students/1 HTTP/1.1\" 500 382 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 04:55:09"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 04:59:05"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 04:59:05"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 04:59:09"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 04:59:09"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 04:59:29"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 04:59:29"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 04:59:37"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 04:59:37"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 04:59:58"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 04:59:58"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:00:02 +0000] \"GET /api/v1/students/1 HTTP/1.1\" 200 672 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:00:02"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:00:17 +0000] \"GET /api/v1/courses HTTP/1.1\" 401 63 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:00:17"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:00:28 +0000] \"GET /api/v1/courses HTTP/1.1\" 200 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:00:28"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:00:44 +0000] \"GET /api/v1/courses/1 HTTP/1.1\" 401 63 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:00:44"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:00:53 +0000] \"GET /api/v1/courses/1 HTTP/1.1\" 200 448 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:00:53"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:01:10 +0000] \"GET /api/v1/schedules/available-slots HTTP/1.1\" 401 63 \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:01:10"}
+{"level":"error","message":"500 - Undefined binding(s) detected when compiling SELECT. Undefined column(s): [classes.class_date] query: select `classes`.* from `classes` inner join `course_groups` on `classes`.`course_group_id` = `course_groups`.`id` inner join `courses` on `course_groups`.`course_id` = `courses`.`id` where `classes`.`class_date` = ? and `classes`.`status` != ? - /api/v1/schedules/available-slots - GET - ::1","service":"english-korat-api","timestamp":"2025-08-14 05:01:19"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:01:19 +0000] \"GET /api/v1/schedules/available-slots HTTP/1.1\" 500 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:01:19"}
+{"level":"error","message":"500 - select `classes`.*, `courses`.`name` as `course_name`, `course_groups`.`group_name`, `teacher_users`.`first_name` as `teacher_first_name`, `teacher_users`.`last_name` as `teacher_last_name`, `rooms`.`room_name` from `classes` inner join `course_groups` on `classes`.`course_group_id` = `course_groups`.`id` inner join `courses` on `course_groups`.`course_id` = `courses`.`id` inner join `teachers` on `classes`.`teacher_id` = `teachers`.`id` inner join `users` as `teacher_users` on `teachers`.`user_id` = `teacher_users`.`id` inner join `rooms` on `classes`.`room_id` = `rooms`.`id` where `courses`.`branch_id` = '1' order by `classes`.`class_date` asc, `classes`.`start_time` asc - Unknown column 'teacher_users.first_name' in 'field list' - /api/v1/schedules/branch/1 - GET - ::1","service":"english-korat-api","timestamp":"2025-08-14 05:01:35"}
+{"level":"info","message":"::1 - - [13/Aug/2025:22:01:35 +0000] \"GET /api/v1/schedules/branch/1 HTTP/1.1\" 500 - \"-\" \"PostmanRuntime/7.45.0\"","service":"english-korat-api","timestamp":"2025-08-14 05:01:35"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 12:17:34"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 12:17:34"}
+{"level":"error","message":"500 - read ECONNRESET - /api/v1/auth/login - POST - ::1","service":"english-korat-api","timestamp":"2025-08-14 12:23:24"}
+{"level":"info","message":"::1 - - [14/Aug/2025:05:23:24 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 500 156 \"http://localhost:3001/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0\"","service":"english-korat-api","timestamp":"2025-08-14 12:23:24"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-14 12:23:47"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-14 12:23:47"}
+{"level":"info","message":"::1 - - [14/Aug/2025:05:23:52 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 534 \"http://localhost:3001/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0\"","service":"english-korat-api","timestamp":"2025-08-14 12:23:52"}

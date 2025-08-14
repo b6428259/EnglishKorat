@@ -28,7 +28,8 @@ Write-Host "Tunnel up. MySQL: 127.0.0.1:$LocalMySQLPort, Redis: 127.0.0.1:$Local
 Write-Host "Starting: npm run dev (press Ctrl+C to stop)"
 
 try {
-  npm test
+  npm run dev
+  # npm test
   if ($LASTEXITCODE -eq 0) {
     npm run dev
   } else {

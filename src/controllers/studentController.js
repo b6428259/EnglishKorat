@@ -1,5 +1,7 @@
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
+const { safeJsonParse } = require('../utils/safeJson');
+
 
 // @desc    Register a new student with full details
 // @route   POST /api/v1/students/register
@@ -209,7 +211,6 @@ const getStudent = asyncHandler(async (req, res) => {
     )
     .where('students.id', id);
 
-  // Apply branch restriction for non-owners
   if (req.user.role !== 'owner') {
     query = query.where('users.branch_id', req.user.branch_id);
   }
@@ -217,21 +218,13 @@ const getStudent = asyncHandler(async (req, res) => {
   const student = await query.first();
 
   if (!student) {
-    return res.status(404).json({
-      success: false,
-      message: 'Student not found'
-    });
+    return res.status(404).json({ success: false, message: 'Student not found' });
   }
 
-  // Parse JSON fields
-  if (student.learning_preferences) {
-    student.learning_preferences = JSON.parse(student.learning_preferences);
-  }
+  // ✅ parse แบบปลอดภัย (ไม่พังถ้าไม่ใช่ JSON)
+  student.learning_preferences = safeJsonParse(student.learning_preferences);
 
-  res.json({
-    success: true,
-    data: { student }
-  });
+  return res.json({ success: true, data: { student } });
 });
 
 // @desc    Update student information
