@@ -1,8 +1,10 @@
 /**
  * Course Model - extends BaseModel with course-specific operations
+ * Enhanced with comprehensive pricing system integration
  */
 
 const BaseModel = require('./BaseModel');
+const PricingCalculationService = require('../services/PricingCalculationService');
 
 class Course extends BaseModel {
   constructor() {
@@ -19,6 +21,146 @@ class Course extends BaseModel {
         .first();
     } catch (error) {
       throw new Error(`Error finding course with category: ${error.message}`);
+    }
+  }
+
+  // Find courses with comprehensive pricing information
+  async findWithPricing(id) {
+    try {
+      const course = await this.knex(this.tableName)
+        .select(
+          'courses.*', 
+          'course_categories.name as category_name', 
+          'course_categories.code as category_code',
+          'course_durations.name as duration_name',
+          'course_durations.hours as duration_hours',
+          'course_durations.is_premium'
+        )
+        .leftJoin('course_categories', 'courses.category_id', 'course_categories.id')
+        .leftJoin('course_durations', 'courses.duration_id', 'course_durations.id')
+        .where('courses.id', id)
+        .first();
+
+      if (!course) {
+        return null;
+      }
+
+      // Get pricing options if using dynamic pricing
+      if (course.uses_dynamic_pricing && course.category_id && course.duration_id) {
+        course.pricingOptions = await PricingCalculationService.getAvailablePricingOptions(
+          course.category_id, 
+          course.duration_id
+        );
+        course.pricingSummary = await PricingCalculationService.getCoursePricingSummary(
+          course.category_id, 
+          course.duration_id
+        );
+      }
+
+      return course;
+    } catch (error) {
+      throw new Error(`Error finding course with pricing: ${error.message}`);
+    }
+  }
+
+  // Calculate dynamic pricing for a specific group size
+  async calculatePricingForGroupSize(courseId, groupSize, options = {}) {
+    try {
+      const course = await this.findById(courseId);
+      if (!course) {
+        throw new Error('Course not found');
+      }
+
+      if (!course.uses_dynamic_pricing || !course.category_id || !course.duration_id) {
+        // Fall back to legacy pricing
+        return {
+          usesLegacyPricing: true,
+          totalPrice: parseFloat(course.price),
+          basePrice: parseFloat(course.price),
+          bookFee: 0,
+          pricePerHourPerPerson: parseFloat(course.price) / course.hours_total
+        };
+      }
+
+      return await PricingCalculationService.calculateCoursePricing(
+        course.category_id,
+        course.duration_id,
+        groupSize,
+        options
+      );
+    } catch (error) {
+      throw new Error(`Error calculating course pricing: ${error.message}`);
+    }
+  }
+
+  // Get all pricing tiers for a course
+  async getAvailablePricingTiers(courseId) {
+    try {
+      const course = await this.findById(courseId);
+      if (!course) {
+        throw new Error('Course not found');
+      }
+
+      if (!course.uses_dynamic_pricing || !course.category_id || !course.duration_id) {
+        return [{
+          tierType: 'legacy',
+          displayName: 'Standard Pricing',
+          totalPrice: parseFloat(course.price),
+          minStudents: 1,
+          maxStudents: course.max_students,
+          usesLegacyPricing: true
+        }];
+      }
+
+      return await PricingCalculationService.getAvailablePricingOptions(
+        course.category_id,
+        course.duration_id
+      );
+    } catch (error) {
+      throw new Error(`Error getting pricing tiers: ${error.message}`);
+    }
+  }
+
+  // Calculate potential savings when moving from individual to group
+  async calculateGroupSavings(courseId, currentGroupSize, newGroupSize) {
+    try {
+      const course = await this.findById(courseId);
+      if (!course) {
+        throw new Error('Course not found');
+      }
+
+      if (!course.uses_dynamic_pricing || !course.category_id || !course.duration_id) {
+        return {
+          usesLegacyPricing: true,
+          savingsPerStudent: 0,
+          percentageSavings: 0
+        };
+      }
+
+      return await PricingCalculationService.calculatePotentialSavings(
+        course.category_id,
+        course.duration_id,
+        currentGroupSize,
+        newGroupSize
+      );
+    } catch (error) {
+      throw new Error(`Error calculating group savings: ${error.message}`);
+    }
+  }
+
+  // Update course to use dynamic pricing
+  async enableDynamicPricing(courseId, categoryId, durationId) {
+    try {
+      await this.update(courseId, {
+        category_id: categoryId,
+        duration_id: durationId,
+        uses_dynamic_pricing: true,
+        updated_at: new Date()
+      });
+
+      return await this.findWithPricing(courseId);
+    } catch (error) {
+      throw new Error(`Error enabling dynamic pricing: ${error.message}`);
     }
   }
 
@@ -49,15 +191,39 @@ class Course extends BaseModel {
     }
   }
 
-  // Get course groups
+  // Get course groups with pricing information
   async getGroups(courseId) {
     try {
-      return await this.knex('course_groups')
+      const groups = await this.knex('course_groups')
         .select('course_groups.*', 'teachers.first_name as teacher_first_name', 'teachers.last_name as teacher_last_name', 'rooms.room_name')
         .leftJoin('teachers', 'course_groups.teacher_id', 'teachers.id')
         .leftJoin('rooms', 'course_groups.room_id', 'rooms.id')
         .where('course_groups.course_id', courseId)
         .orderBy('course_groups.start_date', 'desc');
+
+      // Add pricing information for each group
+      const course = await this.findById(courseId);
+      if (course && course.uses_dynamic_pricing) {
+        for (const group of groups) {
+          try {
+            group.currentPricing = await this.calculatePricingForGroupSize(
+              courseId, 
+              group.current_students || 1
+            );
+            if (group.target_students && group.target_students !== group.current_students) {
+              group.targetPricing = await this.calculatePricingForGroupSize(
+                courseId, 
+                group.target_students
+              );
+            }
+          } catch (pricingError) {
+            // Don't fail if pricing calculation fails
+            console.warn(`Pricing calculation failed for group ${group.id}:`, pricingError.message);
+          }
+        }
+      }
+
+      return groups;
     } catch (error) {
       throw new Error(`Error getting course groups: ${error.message}`);
     }
@@ -76,7 +242,7 @@ class Course extends BaseModel {
     }
   }
 
-  // Get course statistics
+  // Get course statistics with pricing analytics
   async getStatistics(courseId) {
     try {
       // Get basic stats
@@ -101,22 +267,60 @@ class Course extends BaseModel {
         .whereIn('status', ['completed', 'active'])
         .groupBy('status');
 
+      // Get pricing analytics if using dynamic pricing
+      let pricingAnalytics = null;
+      const course = await this.findById(courseId);
+      if (course && course.uses_dynamic_pricing) {
+        const enrollmentPricing = await this.knex('enrollment_pricing')
+          .join('enrollments', 'enrollment_pricing.enrollment_id', 'enrollments.id')
+          .select(
+            'enrollment_pricing.group_size_at_enrollment',
+            'enrollment_pricing.total_price_calculated'
+          )
+          .avg('enrollment_pricing.total_price_calculated as avg_price')
+          .min('enrollment_pricing.total_price_calculated as min_price')
+          .max('enrollment_pricing.total_price_calculated as max_price')
+          .count('* as pricing_records')
+          .where('enrollments.course_id', courseId)
+          .groupBy('enrollment_pricing.group_size_at_enrollment');
+
+        pricingAnalytics = {
+          pricesByGroupSize: enrollmentPricing,
+          pricingChangeHistory: await this.knex('pricing_change_history')
+            .join('enrollments', 'pricing_change_history.enrollment_id', 'enrollments.id')
+            .select('pricing_change_history.*')
+            .where('enrollments.course_id', courseId)
+            .orderBy('pricing_change_history.created_at', 'desc')
+            .limit(10)
+        };
+      }
+
       return {
         enrollmentStats,
         revenueStats,
-        completionStats
+        completionStats,
+        pricingAnalytics
       };
     } catch (error) {
       throw new Error(`Error getting course statistics: ${error.message}`);
     }
   }
 
-  // Search courses with filters
+  // Search courses with filters (enhanced for pricing)
   async search(filters = {}, options = {}) {
     try {
       let query = this.knex(this.tableName)
-        .select('courses.*', 'course_categories.name as category_name', 'course_categories.name_en as category_name_en', 'branches.name as branch_name')
+        .select(
+          'courses.*', 
+          'course_categories.name as category_name', 
+          'course_categories.name_en as category_name_en', 
+          'course_categories.code as category_code',
+          'course_durations.name as duration_name',
+          'course_durations.hours as duration_hours',
+          'branches.name as branch_name'
+        )
         .leftJoin('course_categories', 'courses.category_id', 'course_categories.id')
+        .leftJoin('course_durations', 'courses.duration_id', 'course_durations.id')
         .leftJoin('branches', 'courses.branch_id', 'branches.id');
 
       if (filters.name) {
@@ -133,6 +337,14 @@ class Course extends BaseModel {
 
       if (filters.category_id) {
         query = query.where('courses.category_id', filters.category_id);
+      }
+
+      if (filters.duration_id) {
+        query = query.where('courses.duration_id', filters.duration_id);
+      }
+
+      if (filters.uses_dynamic_pricing !== undefined) {
+        query = query.where('courses.uses_dynamic_pricing', filters.uses_dynamic_pricing);
       }
 
       if (filters.status) {
@@ -170,7 +382,25 @@ class Course extends BaseModel {
         query = query.offset(options.offset);
       }
 
-      return await query;
+      const courses = await query;
+
+      // Add pricing information if requested
+      if (options.includePricing) {
+        for (const course of courses) {
+          if (course.uses_dynamic_pricing && course.category_id && course.duration_id) {
+            try {
+              course.pricingOptions = await PricingCalculationService.getAvailablePricingOptions(
+                course.category_id, 
+                course.duration_id
+              );
+            } catch (pricingError) {
+              console.warn(`Failed to get pricing for course ${course.id}:`, pricingError.message);
+            }
+          }
+        }
+      }
+
+      return courses;
     } catch (error) {
       throw new Error(`Error searching courses: ${error.message}`);
     }
@@ -215,5 +445,7 @@ class Course extends BaseModel {
     }
   }
 }
+
+module.exports = Course;
 
 module.exports = Course;

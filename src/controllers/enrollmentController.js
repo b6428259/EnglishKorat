@@ -1,5 +1,7 @@
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
+const PricingCalculationService = require('../services/PricingCalculationService');
+const Course = require('../models/Course');
 
 // @desc    Enroll student in a course
 // @route   POST /api/v1/enrollments
@@ -8,8 +10,12 @@ const enrollStudent = asyncHandler(async (req, res) => {
   const {
     student_id,
     course_id,
+    course_group_id,
     payment_status = 'pending',
     total_amount,
+    group_size,
+    waive_book_fee = false,
+    discount_percentage = 0,
     notes
   } = req.body;
 
@@ -97,47 +103,127 @@ const enrollStudent = asyncHandler(async (req, res) => {
     }
   }
 
-  // Create enrollment
-  const [enrollmentId] = await db('enrollments').insert({
-    student_id,
-    course_id,
-    enrollment_date: new Date(),
-    payment_status,
-    total_amount: total_amount || course.price,
-    paid_amount: 0,
-    leave_credits: leaveCredits,
-    used_leaves: 0,
-    leave_policy_rule_id: policyRuleId,
-    status: 'active',
-    notes
-  });
+  // Calculate pricing based on course configuration
+  let calculatedPricing = null;
+  let finalAmount = total_amount;
+  let effectiveGroupSize = group_size || 1;
 
-  // Get complete enrollment data
-  const enrollment = await db('enrollments')
-    .join('students', 'enrollments.student_id', 'students.id')
-    .join('courses', 'enrollments.course_id', 'courses.id')
-    .join('users', 'students.user_id', 'users.id')
-    .join('branches', 'courses.branch_id', 'branches.id')
-    .select(
-      'enrollments.*',
-      'students.first_name',
-      'students.last_name',
-      'students.nickname',
-      'courses.name as course_name',
-      'courses.code as course_code',
-      'courses.course_type',
-      'branches.name as branch_name',
-      'users.phone',
-      'users.email'
-    )
-    .where('enrollments.id', enrollmentId)
-    .first();
+  if (course.uses_dynamic_pricing && course.category_id && course.duration_id) {
+    // Use new comprehensive pricing system
+    try {
+      calculatedPricing = await PricingCalculationService.calculateCoursePricing(
+        course.category_id,
+        course.duration_id,
+        effectiveGroupSize,
+        {
+          waiveBookFee: waive_book_fee,
+          discountPercentage: discount_percentage
+        }
+      );
+      finalAmount = calculatedPricing.finalPrice;
+    } catch (pricingError) {
+      return res.status(400).json({
+        success: false,
+        message: `Pricing calculation failed: ${pricingError.message}`
+      });
+    }
+  } else {
+    // Use legacy pricing if total_amount not provided
+    if (!total_amount) {
+      finalAmount = course.price;
+    }
+  }
 
-  res.status(201).json({
-    success: true,
-    message: 'Student enrolled successfully',
-    data: { enrollment }
-  });
+  // Begin transaction for enrollment creation
+  const trx = await db.transaction();
+
+  try {
+    // Create enrollment
+    const [enrollmentId] = await trx('enrollments').insert({
+      student_id,
+      course_id,
+      course_group_id,
+      enrollment_date: new Date(),
+      payment_status,
+      total_amount: finalAmount,
+      paid_amount: 0,
+      leave_credits: leaveCredits,
+      used_leaves: 0,
+      leave_policy_rule_id: policyRuleId,
+      status: 'active',
+      notes
+    });
+
+    // Create detailed pricing record if using dynamic pricing
+    if (calculatedPricing) {
+      await trx('enrollment_pricing').insert({
+        enrollment_id: enrollmentId,
+        course_pricing_id: null, // Will be linked when we know the exact pricing record
+        group_size_at_enrollment: effectiveGroupSize,
+        calculated_base_price: calculatedPricing.basePrice,
+        book_fee_applied: calculatedPricing.bookFee,
+        total_price_calculated: calculatedPricing.finalPrice,
+        book_fee_waived: waive_book_fee,
+        pricing_calculation_details: JSON.stringify(calculatedPricing.calculationDetails),
+        notes: calculatedPricing.notes
+      });
+    }
+
+    // Commit transaction
+    await trx.commit();
+
+    // Get complete enrollment data
+    const enrollment = await db('enrollments')
+      .join('students', 'enrollments.student_id', 'students.id')
+      .join('courses', 'enrollments.course_id', 'courses.id')
+      .join('users', 'students.user_id', 'users.id')
+      .join('branches', 'courses.branch_id', 'branches.id')
+      .leftJoin('enrollment_pricing', 'enrollments.id', 'enrollment_pricing.enrollment_id')
+      .select(
+        'enrollments.*',
+        'students.first_name',
+        'students.last_name',
+        'students.nickname',
+        'courses.name as course_name',
+        'courses.code as course_code',
+        'courses.course_type',
+        'courses.uses_dynamic_pricing',
+        'branches.name as branch_name',
+        'users.phone',
+        'users.email',
+        'enrollment_pricing.group_size_at_enrollment',
+        'enrollment_pricing.calculated_base_price',
+        'enrollment_pricing.book_fee_applied',
+        'enrollment_pricing.total_price_calculated',
+        'enrollment_pricing.book_fee_waived',
+        'enrollment_pricing.pricing_calculation_details'
+      )
+      .where('enrollments.id', enrollmentId)
+      .first();
+
+    // Parse pricing details if available
+    if (enrollment.pricing_calculation_details) {
+      try {
+        enrollment.pricing_details = JSON.parse(enrollment.pricing_calculation_details);
+      } catch (e) {
+        console.warn('Failed to parse pricing calculation details');
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Student enrolled successfully',
+      data: {
+        enrollment,
+        pricingBreakdown: calculatedPricing
+      }
+    });
+
+  } catch (error) {
+    // Rollback transaction on error
+    await trx.rollback();
+    throw error;
+  }
 });
 
 // @desc    Get all enrollments
