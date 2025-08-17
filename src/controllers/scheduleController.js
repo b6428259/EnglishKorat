@@ -9,11 +9,14 @@ const getTeacherSchedule = asyncHandler(async (req, res) => {
   const { start_date, end_date, status } = req.query;
 
   // Verify teacher exists and user has access
-  const teacher = await db('teachers')
-    .join('users', 'teachers.user_id', 'users.id')
-    .select('teachers.*', 'users.first_name', 'users.last_name', 'users.branch_id')
-    .where('teachers.id', teacherId)
-    .first();
+const teacher = await db('teachers')
+  .join('users', 'teachers.user_id', 'users.id')
+  .select(
+    'teachers.*',           // assume teachers has first_name/last_name
+    'users.branch_id'
+  )
+  .where('teachers.id', teacherId)
+  .first();
 
   if (!teacher) {
     return res.status(404).json({
@@ -35,17 +38,17 @@ const getTeacherSchedule = asyncHandler(async (req, res) => {
   }
 
   // Build query for teacher's classes
-  let query = db('classes')
-    .join('course_groups', 'classes.course_group_id', 'course_groups.id')
-    .join('courses', 'course_groups.course_id', 'courses.id')
-    .join('rooms', 'classes.room_id', 'rooms.id')
-    .select(
-      'classes.*',
-      'courses.name as course_name',
-      'course_groups.group_name',
-      'rooms.room_name'
-    )
-    .where('classes.teacher_id', teacherId);
+let query = db('classes')
+  .join('course_groups', 'classes.course_group_id', 'course_groups.id')
+  .join('courses', 'course_groups.course_id', 'courses.id')
+  .join('rooms', 'classes.room_id', 'rooms.id')
+  .select(
+    'classes.*',
+    'courses.name as course_name',
+    'course_groups.group_name',
+    'rooms.room_name'
+  )
+  .where('classes.teacher_id', teacherId);
 
   // Apply filters
   if (start_date) {
@@ -102,11 +105,14 @@ const getStudentSchedule = asyncHandler(async (req, res) => {
   const { start_date, end_date, status } = req.query;
 
   // Verify student exists and user has access
-  const student = await db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .select('students.*', 'users.first_name', 'users.last_name', 'users.branch_id')
-    .where('students.id', studentId)
-    .first();
+const student = await db('students')
+  .join('users', 'students.user_id', 'users.id')
+  .select(
+    'students.*',                 // has first_name / last_name
+    'users.branch_id'             // keep branch for permissions
+  )
+  .where('students.id', studentId)
+  .first();
 
   if (!student) {
     return res.status(404).json({
@@ -128,31 +134,31 @@ const getStudentSchedule = asyncHandler(async (req, res) => {
   }
 
   // Get student's enrolled courses and their classes
-  let query = db('classes')
-    .join('course_groups', 'classes.course_group_id', 'course_groups.id')
-    .join('courses', 'course_groups.course_id', 'courses.id')
-    .join('enrollments', function() {
-      this.on('enrollments.course_group_id', '=', 'course_groups.id')
-        .andOn('enrollments.student_id', '=', studentId);
-    })
-    .join('teachers', 'classes.teacher_id', 'teachers.id')
-    .join('users as teacher_users', 'teachers.user_id', 'teacher_users.id')
-    .join('rooms', 'classes.room_id', 'rooms.id')
-    .leftJoin('class_attendances', function() {
-      this.on('class_attendances.class_id', '=', 'classes.id')
-        .andOn('class_attendances.student_id', '=', studentId);
-    })
-    .select(
-      'classes.*',
-      'courses.name as course_name',
-      'course_groups.group_name',
-      'teacher_users.first_name as teacher_first_name',
-      'teacher_users.last_name as teacher_last_name',
-      'rooms.room_name',
-      'class_attendances.status as attendance_status',
-      'enrollments.status as enrollment_status'
-    )
-    .where('enrollments.status', 'active');
+let query = db('classes')
+  .join('course_groups', 'classes.course_group_id', 'course_groups.id')
+  .join('courses', 'course_groups.course_id', 'courses.id')
+  .join('enrollments', function () {
+    this.on('enrollments.course_group_id', '=', 'course_groups.id')
+      .andOn('enrollments.student_id', '=', db.raw('?', [studentId]));
+  })
+  .join('teachers', 'classes.teacher_id', 'teachers.id')
+  // removed join to users as teacher_users for names (users table has no names)
+  .join('rooms', 'classes.room_id', 'rooms.id')
+  .leftJoin('class_attendances', function () {
+    this.on('class_attendances.class_id', '=', 'classes.id')
+      .andOn('class_attendances.student_id', '=', db.raw('?', [studentId]));
+  })
+  .select(
+    'classes.*',
+    'courses.name as course_name',
+    'course_groups.group_name',
+    'teachers.first_name as teacher_first_name',
+    'teachers.last_name as teacher_last_name',
+    'rooms.room_name',
+    'class_attendances.status as attendance_status',
+    'enrollments.status as enrollment_status'
+  )
+  .where('enrollments.status', 'active');
 
   // Apply filters
   if (start_date) {
@@ -206,19 +212,20 @@ const getRoomSchedule = asyncHandler(async (req, res) => {
   }
 
   // Build query for room's classes
-  let query = db('classes')
-    .join('course_groups', 'classes.course_group_id', 'course_groups.id')
-    .join('courses', 'course_groups.course_id', 'courses.id')
-    .join('teachers', 'classes.teacher_id', 'teachers.id')
-    .join('users as teacher_users', 'teachers.user_id', 'teacher_users.id')
-    .select(
-      'classes.*',
-      'courses.name as course_name',
-      'course_groups.group_name',
-      'teacher_users.first_name as teacher_first_name',
-      'teacher_users.last_name as teacher_last_name'
-    )
-    .where('classes.room_id', roomId);
+let query = db('classes')
+  .join('course_groups', 'classes.course_group_id', 'course_groups.id')
+  .join('courses', 'course_groups.course_id', 'courses.id')
+  .join('teachers', 'classes.teacher_id', 'teachers.id')
+  // removed users alias; users has no names
+  .select(
+    'classes.*',
+    'courses.name as course_name',
+    'course_groups.group_name',
+    'teachers.first_name as teacher_first_name',
+    'teachers.last_name as teacher_last_name'
+  )
+  .where('classes.room_id', roomId);
+
 
   // Apply filters
   if (start_date) {
@@ -361,6 +368,9 @@ const checkSchedulingConflicts = asyncHandler(async (req, res) => {
 // @desc    Get available time slots
 // @route   GET /api/v1/schedules/available-slots
 // @access  Private (Admin, Owner)
+// @desc    Get available time slots
+// @route   GET /api/v1/schedules/available-slots
+// @access  Private (Admin, Owner)
 const getAvailableTimeSlots = asyncHandler(async (req, res) => {
   const {
     branch_id,
@@ -370,7 +380,7 @@ const getAvailableTimeSlots = asyncHandler(async (req, res) => {
     room_id
   } = req.query;
 
-  // Only admin and owner can get available slots
+  // --- AuthZ guard (defense in depth; router already checks) ---
   if (!['admin', 'owner'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
@@ -378,112 +388,137 @@ const getAvailableTimeSlots = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check branch permissions
-  if (req.user.role !== 'owner' && branch_id && branch_id !== req.user.branch_id.toString()) {
+  // If not owner, can only query own branch (when a branch filter is provided)
+  if (req.user.role !== 'owner' && branch_id && String(req.user.branch_id) !== String(branch_id)) {
     return res.status(403).json({
       success: false,
       message: 'Access denied. Cannot access other branches.'
     });
   }
 
-  // Define business hours (8:00 AM to 9:00 PM)
-  const businessStart = '08:00:00';
-  const businessEnd = '21:00:00';
-  const slotDuration = parseFloat(duration_hours);
-
-  // Generate possible time slots
-  const timeSlots = [];
-  let currentTime = new Date(`2023-01-01 ${businessStart}`);
-  const endTime = new Date(`2023-01-01 ${businessEnd}`);
-
-  while (currentTime < endTime) {
-    const endSlot = new Date(currentTime.getTime() + (slotDuration * 60 * 60 * 1000));
-    if (endSlot <= endTime) {
-      timeSlots.push({
-        start_time: currentTime.toTimeString().slice(0, 8),
-        end_time: endSlot.toTimeString().slice(0, 8)
-      });
-    }
-    currentTime = new Date(currentTime.getTime() + (30 * 60 * 1000)); // 30-minute intervals
+  // --- Validation ---
+  if (!class_date) {
+    return res.status(400).json({
+      success: false,
+      message: 'class_date is required (YYYY-MM-DD)'
+    });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(class_date)) {
+    return res.status(400).json({
+      success: false,
+      message: 'class_date must be in YYYY-MM-DD format'
+    });
   }
 
-  // Get existing classes for the date
-  let query = db('classes')
+  const slotDuration = Number(duration_hours);
+  if (!Number.isFinite(slotDuration) || slotDuration <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'duration_hours must be a positive number'
+    });
+  }
+
+  // --- Helpers (work with time strings; avoid Date/zone pitfalls) ---
+  const toMinutes = (hhmmss) => {
+    const [h, m, s = '0'] = hhmmss.split(':').map(Number);
+    return h * 60 + m + Math.floor(s / 60);
+  };
+  const toHHMMSS = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(h)}:${pad(m)}:00`;
+  };
+  const overlaps = (aStart, aEnd, bStart, bEnd) =>
+    toMinutes(aStart) < toMinutes(bEnd) && toMinutes(bStart) < toMinutes(aEnd);
+
+  // Business hours and grid step
+  const BUSINESS_START = '08:00:00';
+  const BUSINESS_END   = '21:00:00';
+  const STEP_MINUTES = 30;
+
+  // --- Generate candidate slots ---
+  const startMin = toMinutes(BUSINESS_START);
+  const endMin = toMinutes(BUSINESS_END);
+  const durMin = Math.round(slotDuration * 60);
+
+  const timeSlots = [];
+  for (let t = startMin; t + durMin <= endMin; t += STEP_MINUTES) {
+    const start = toHHMMSS(t);
+    const end = toHHMMSS(t + durMin);
+    timeSlots.push({ start_time: start, end_time: end });
+  }
+
+  // --- Fetch existing classes for that date (and filters) ---
+  // We only need minimal fields to evaluate conflicts
+  let classQ = db('classes')
     .join('course_groups', 'classes.course_group_id', 'course_groups.id')
     .join('courses', 'course_groups.course_id', 'courses.id')
-    .select('classes.*')
+    .select('classes.id', 'classes.room_id', 'classes.teacher_id', 'classes.start_time', 'classes.end_time')
     .where('classes.class_date', class_date)
     .where('classes.status', '!=', 'cancelled');
 
-  if (branch_id) {
-    query = query.where('courses.branch_id', branch_id);
-  }
-  if (teacher_id) {
-    query = query.where('classes.teacher_id', teacher_id);
-  }
+  if (branch_id) classQ = classQ.where('courses.branch_id', branch_id);
+  if (teacher_id) classQ = classQ.where('classes.teacher_id', teacher_id);
+  if (room_id) classQ = classQ.where('classes.room_id', room_id);
 
-  const existingClasses = await query;
+  const existingClasses = await classQ;
 
-  // Get available rooms
-  let roomQuery = db('rooms')
-    .select('*')
-    .where('status', 'available');
+  // --- Fetch available rooms ---
+  let roomQ = db('rooms').select('id', 'room_name', 'branch_id', 'status').where('status', 'available');
+  if (branch_id) roomQ = roomQ.where('branch_id', branch_id);
+  if (room_id) roomQ = roomQ.where('id', room_id);
+  const availableRooms = await roomQ;
 
-  if (branch_id) {
-    roomQuery = roomQuery.where('branch_id', branch_id);
-  }
-  if (room_id) {
-    roomQuery = roomQuery.where('id', room_id);
-  }
-
-  const availableRooms = await roomQuery;
-
-  // Get available teachers
-  let teacherQuery = db('teachers')
+  // --- Fetch available teachers ---
+  let teacherQ = db('teachers')
     .join('users', 'teachers.user_id', 'users.id')
-    .select('teachers.*', 'users.first_name', 'users.last_name')
+    .select('teachers.id', 'teachers.first_name', 'teachers.last_name', 'users.branch_id', 'teachers.is_active')
     .where('teachers.is_active', true);
+  if (branch_id) teacherQ = teacherQ.where('users.branch_id', branch_id);
+  if (teacher_id) teacherQ = teacherQ.where('teachers.id', teacher_id);
+  const availableTeachers = await teacherQ;
 
-  if (branch_id) {
-    teacherQuery = teacherQuery.where('users.branch_id', branch_id);
-  }
-  if (teacher_id) {
-    teacherQuery = teacherQuery.where('teachers.id', teacher_id);
-  }
-
-  const availableTeachers = await teacherQuery;
-
-  // Find available slots
-  const availableSlots = [];
-
-  for (const slot of timeSlots) {
-    const slotConflicts = existingClasses.filter(existingClass => {
-      return (
-        (slot.start_time <= existingClass.start_time && slot.end_time > existingClass.start_time) ||
-        (slot.start_time < existingClass.end_time && slot.end_time >= existingClass.end_time) ||
-        (slot.start_time >= existingClass.start_time && slot.end_time <= existingClass.end_time)
-      );
+  // Short-circuit if no rooms/teachers are available at all
+  if (availableRooms.length === 0 || availableTeachers.length === 0) {
+    return res.json({
+      success: true,
+      data: {
+        date: class_date,
+        duration_hours: slotDuration,
+        available_slots: [],
+        summary: {
+          total_possible_slots: timeSlots.length,
+          available_slots: 0,
+          occupied_slots: timeSlots.length
+        }
+      }
     });
-
-    // Check room availability
-    const availableRoomsForSlot = availableRooms.filter(room => {
-      return !slotConflicts.some(conflict => conflict.room_id === room.id);
-    });
-
-    // Check teacher availability
-    const availableTeachersForSlot = availableTeachers.filter(teacher => {
-      return !slotConflicts.some(conflict => conflict.teacher_id === teacher.id);
-    });
-
-    if (availableRoomsForSlot.length > 0 && availableTeachersForSlot.length > 0) {
-      availableSlots.push({
-        ...slot,
-        available_rooms: availableRoomsForSlot,
-        available_teachers: availableTeachersForSlot
-      });
-    }
   }
 
+  // --- Build availability per slot ---
+  const availableSlots = timeSlots.map((slot) => {
+    // classes overlapping this slot
+    const slotConflicts = existingClasses.filter((c) =>
+      overlaps(slot.start_time, slot.end_time, c.start_time, c.end_time)
+    );
+
+    // remove rooms/teachers that are already booked in conflicts
+    const busyRoomIds = new Set(slotConflicts.map((c) => c.room_id));
+    const busyTeacherIds = new Set(slotConflicts.map((c) => c.teacher_id));
+
+    const roomsForSlot = availableRooms.filter((r) => !busyRoomIds.has(r.id));
+    const teachersForSlot = availableTeachers.filter((t) => !busyTeacherIds.has(t.id));
+
+    return {
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      available_rooms: roomsForSlot,
+      available_teachers: teachersForSlot
+    };
+  }).filter(s => s.available_rooms.length > 0 && s.available_teachers.length > 0);
+
+  // --- Response ---
   res.json({
     success: true,
     data: {
@@ -498,6 +533,7 @@ const getAvailableTimeSlots = asyncHandler(async (req, res) => {
     }
   });
 });
+
 
 // @desc    Get branch schedule overview
 // @route   GET /api/v1/schedules/branch/:branchId
@@ -535,21 +571,20 @@ const getBranchSchedule = asyncHandler(async (req, res) => {
   }
 
   // Get branch classes
-  let query = db('classes')
-    .join('course_groups', 'classes.course_group_id', 'course_groups.id')
-    .join('courses', 'course_groups.course_id', 'courses.id')
-    .join('teachers', 'classes.teacher_id', 'teachers.id')
-    .join('users as teacher_users', 'teachers.user_id', 'teacher_users.id')
-    .join('rooms', 'classes.room_id', 'rooms.id')
-    .select(
-      'classes.*',
-      'courses.name as course_name',
-      'course_groups.group_name',
-      'teacher_users.first_name as teacher_first_name',
-      'teacher_users.last_name as teacher_last_name',
-      'rooms.room_name'
-    )
-    .where('courses.branch_id', branchId);
+let query = db('classes')
+  .join('course_groups', 'classes.course_group_id', 'course_groups.id')
+  .join('courses', 'course_groups.course_id', 'courses.id')
+  .join('teachers', 'classes.teacher_id', 'teachers.id')
+  .join('rooms', 'classes.room_id', 'rooms.id')
+  .select(
+    'classes.*',
+    'courses.name as course_name',
+    'course_groups.group_name',
+    'teachers.first_name as teacher_first_name',
+    'teachers.last_name as teacher_last_name',
+    'rooms.room_name'
+  )
+  .where('courses.branch_id', branchId);
 
   // Apply date filters
   if (start_date) {

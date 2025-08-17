@@ -4,7 +4,7 @@
  * including group size changes, book fees, and discount applications.
  */
 
-const db = require('../../config/database');
+const db = require('../config/database');
 
 class PricingCalculationService {
   

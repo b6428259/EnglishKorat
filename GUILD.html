@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Common Front‑End Components — Next.js + Tailwind</title>
+  <!-- Tailwind via CDN (สำหรับหน้าเอกสารนี้) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+              400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+              800: '#3730a3', 900: '#312e81'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: 255 255 255; --ink: 17 24 39; }
+    html { scroll-behavior: smooth; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    pre { overflow: auto; background: #0b1020; color: #e5e7eb; border-radius: 14px; padding: 16px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.95rem; }
+    .kbd { border: 1px solid #d1d5db; border-bottom-width: 2px; padding: 0 6px; border-radius: 6px; font-size: 0.825rem; background: #fff; }
+    .copy-btn { position:absolute; top:10px; right:10px; }
+    .code-wrap { position: relative; }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-white via-slate-50 to-white text-slate-800">
+  <!-- Header / Hero -->
+  <header class="sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-slate-200/60">
+    <div class="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100 text-brand-700 ring-1 ring-brand-300">UI</span>
+        <h1 class="text-lg font-semibold">Common Front‑End Components — Next.js + Tailwind</h1>
+      </div>
+      <nav class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#structure" class="hover:text-brand-600">โครงสร้าง</a>
+        <a href="#setup" class="hover:text-brand-600">ตั้งค่า</a>
+        <a href="#styles" class="hover:text-brand-600">สไตล์</a>
+        <a href="#components" class="hover:text-brand-600">Components</a>
+        <a href="#usage" class="hover:text-brand-600">วิธีใช้</a>
+        <a href="#pages" class="hover:text-brand-600">ตัวอย่างหน้า</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="mx-auto max-w-7xl px-4 pt-10 pb-4">
+    <div class="grid md:grid-cols-4 gap-8">
+      <aside class="md:col-span-1">
+        <div class="sticky top-[84px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 class="text-sm font-semibold text-slate-600 mb-3">สารบัญ</h2>
+          <ol class="space-y-2 text-sm">
+            <li><a class="text-slate-700 hover:text-brand-600" href="#structure">1) โครงสร้างโปรเจกต์</a></li>
+            <li><a class="text-slate-700 hover:text-brand-600" href="#setup">2) การตั้งค่า Next.js + Tailwind</a></li>
+            <li><a class="text-slate-700 hover:text-brand-600" href="#styles">3) Common Styles</a></li>
+            <li><a class="text-slate-700 hover:text-brand-600" href="#components">4) Common Components</a></li>
+            <li><a class="text-slate-700 hover:text-brand-600" href="#usage">5) วิธีใช้งาน (รวม path Windows)</a></li>
+            <li><a class="text-slate-700 hover:text-brand-600" href="#pages">6) ตัวอย่างหน้า (App Router)</a></li>
+          </ol>
+        </div>
+      </aside>
+
+      <main class="md:col-span-3 space-y-16">
+        <!-- Structure -->
+        <section id="structure" class="scroll-mt-28">
+          <h2 class="text-2xl font-bold mb-4">โครงสร้างโปรเจกต์</h2>
+          <p class="mb-3 text-slate-600">ตามที่ระบุ — ใช้งานร่วมกับ Next.js (App Router) และ Tailwind</p>
+          <div class="code-wrap">
+            <button class="copy-btn kbd" data-copy="tree">คัดลอก</button>
+            <pre id="tree"><code>src/
+├─ app/
+│  ├─ auth/
+│  │  └─ page.tsx
+│  ├─ dashboard/
+│  │  └─ page.tsx
+│  ├─ favicon.ico
+│  ├─ globals.css
+│  ├─ layout.tsx
+│  └─ page.tsx
+├─ components/
+│  ├─ common/
+│  │  ├─ Button.tsx
+│  │  ├─ Footer.tsx
+│  │  ├─ Header.tsx
+│  │  ├─ Layout.tsx
+│  │  └─ Loading.tsx
+│  ├─ forms/
+│  │  └─ AuthForm.tsx
+│  └─ ui/
+├─ hooks/
+│  └─ useAuth.ts
+├─ services/
+│  ├─ api.ts
+│  ├─ auth.service.ts
+│  └─ user.service.ts
+├─ styles/
+│  └─ colors.ts
+├─ types/
+│  └─ auth.types.ts
+└─ utils/
+   ├─ constants.ts
+   └─ helpers.ts</code></pre>
+          </div>
+        </section>
+
+        <!-- Setup -->
+        <section id="setup" class="scroll-mt-28">
+          <h2 class="text-2xl font-bold mb-4">การตั้งค่า Next.js + Tailwind (ย่อ)</h2>
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <ol class="list-decimal list-inside space-y-2">
+              <li>สร้างโปรเจกต์: <span class="kbd">npx create-next-app@latest englishkorat_frontend --ts --eslint --app</span></li>
+              <li>ติดตั้ง Tailwind: <span class="kbd">npm i -D tailwindcss postcss autoprefixer</span> แล้ว <span class="kbd">npx tailwindcss init -p</span></li>
+              <li>เพิ่มใน <span class="kbd">tailwind.config.ts</span> (ดูตัวอย่างข้างล่าง) และใส่ <span class="kbd">@tailwind base; @tailwind components; @tailwind utilities;</span> ใน <span class="kbd">src/app/globals.css</span></li>
+              <li>ตั้งค่า path alias ให้ใช้ <span class="kbd">@/...</span> ใน <span class="kbd">tsconfig.json</span> (มีตัวอย่าง)</li>
+            </ol>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="twcfg">คัดลอก</button>
+                <p class="text-sm font-medium text-slate-600 mb-2">ตัวอย่าง <strong>tailwind.config.ts</strong></p>
+                <pre id="twcfg"><code class="language-ts">import type { Config } from 'tailwindcss'
+import colors from './src/styles/colors'
+
+const config: Config = {
+  content: [
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: colors.brand,
+      },
+      container: { center: true, padding: '1rem' },
+      borderRadius: { '2xl': '1rem' }
+    },
+  },
+  plugins: [],
+}
+export default config</code></pre>
+              </div>
+
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="tscfg">คัดลอก</button>
+                <p class="text-sm font-medium text-slate-600 mb-2">ตัวอย่าง <strong>tsconfig.json</strong> (alias <span class="kbd">@</span>)</p>
+                <pre id="tscfg"><code class="language-json">{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Styles -->
+        <section id="styles" class="scroll-mt-28">
+          <h2 class="text-2xl font-bold mb-4">Common Styles</h2>
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+            <div>
+              <p class="text-sm text-slate-600 mb-2">ไฟล์: <span class="kbd">src/styles/colors.ts</span></p>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="colors">คัดลอก</button>
+                <pre id="colors"><code class="language-ts">// src/styles/colors.ts
+const colors = {
+  brand: {
+    50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',
+    400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',
+    800:'#3730a3',900:'#312e81'
+  }
+}
+export default colors</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-sm text-slate-600 mb-2">ไฟล์: <span class="kbd">src/utils/helpers.ts</span></p>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="helpers">คัดลอก</button>
+                <pre id="helpers"><code class="language-ts">// src/utils/helpers.ts
+export function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
+
+export const safeLocalStorage = {
+  get(key: string) {
+    if (typeof window === 'undefined') return null
+    try { return window.localStorage.getItem(key) } catch { return null }
+  },
+  set(key: string, value: string) {
+    if (typeof window === 'undefined') return
+    try { window.localStorage.setItem(key, value) } catch {}
+  },
+  remove(key: string) {
+    if (typeof window === 'undefined') return
+    try { window.localStorage.removeItem(key) } catch {}
+  }
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-sm text-slate-600 mb-2">ไฟล์: <span class="kbd">src/utils/constants.ts</span></p>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="constants">คัดลอก</button>
+                <pre id="constants"><code class="language-ts">// src/utils/constants.ts
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
+export const TOKEN_KEY = 'ek_token'</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Components -->
+        <section id="components" class="scroll-mt-28">
+          <h2 class="text-2xl font-bold mb-6">Common Components</h2>
+          <div class="grid gap-6">
+            <!-- Button -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Button.tsx</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/components/common/Button.tsx</span></span>
+              </div>
+              <p class="text-slate-600 mb-3">ปุ่มพร้อม <em>variant</em> และ <em>size</em> + สถานะโหลด</p>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="btn">คัดลอก</button>
+<pre id="btn"><code class="language-tsx">// src/components/common/Button.tsx
+'use client'
+import * as React from 'react'
+import { cn } from '@/utils/helpers'
+
+export type ButtonProps = React.ButtonHTMLAttributes&lt;HTMLButtonElement&gt; &amp; {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+  size?: 'sm' | 'md' | 'lg'
+  isLoading?: boolean
+}
+
+const base = 'inline-flex items-center justify-center font-medium rounded-2xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed'
+const variants: Record&lt;NonNullable&lt;ButtonProps['variant']&gt;, string&gt; = {
+  primary: 'bg-brand-600 hover:bg-brand-700 text-white focus:ring-brand-400',
+  secondary: 'bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 focus:ring-slate-300',
+  ghost: 'bg-transparent hover:bg-slate-100 text-slate-700',
+  danger: 'bg-rose-600 hover:bg-rose-700 text-white focus:ring-rose-400'
+}
+const sizes: Record&lt;NonNullable&lt;ButtonProps['size']&gt;, string&gt; = {
+  sm: 'text-sm px-3 py-1.5', md: 'text-sm px-4 py-2', lg: 'text-base px-5 py-2.5'
+}
+
+export default function Button({
+  className, variant = 'primary', size = 'md', isLoading, children, ...props
+}: ButtonProps) {
+  return (
+    &lt;button className={cn(base, variants[variant], sizes[size], className)} {...props}&gt;
+      {isLoading &amp;&amp; (
+        &lt;svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"&gt;
+          &lt;circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/&gt;
+          &lt;path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/&gt;
+        &lt;/svg&gt;
+      )}
+      {children}
+    &lt;/button&gt;
+  )
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- Header -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Header.tsx</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/components/common/Header.tsx</span></span>
+              </div>
+              <p class="text-slate-600 mb-3">ส่วนหัวพร้อมเมนู (รองรับมือถือ)</p>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="header">คัดลอก</button>
+<pre id="header"><code class="language-tsx">// src/components/common/Header.tsx
+'use client'
+import Link from 'next/link'
+import { useState } from 'react'
+import Button from './Button'
+
+export default function Header() {
+  const [open, setOpen] = useState(false)
+  return (
+    &lt;header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b"&gt;
+      &lt;div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between"&gt;
+        &lt;Link href="/" className="font-semibold text-brand-700"&gt;EnglishKorat&lt;/Link&gt;
+        &lt;nav className="hidden md:flex items-center gap-6 text-sm"&gt;
+          &lt;Link href="/" className="hover:text-brand-700"&gt;Home&lt;/Link&gt;
+          &lt;Link href="/dashboard" className="hover:text-brand-700"&gt;Dashboard&lt;/Link&gt;
+          &lt;Link href="/auth" className="hover:text-brand-700"&gt;Sign In&lt;/Link&gt;
+          &lt;Button size="sm"&gt;Get Started&lt;/Button&gt;
+        &lt;/nav&gt;
+        &lt;button className="md:hidden p-2 rounded-xl hover:bg-slate-100" onClick={() =&gt; setOpen(v =&gt; !v)} aria-label="Toggle Menu"&gt;
+          &lt;svg width="24" height="24" viewBox="0 0 24 24" fill="none"&gt;
+            &lt;path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+      {open &amp;&amp; (
+        &lt;div className="md:hidden border-t"&gt;
+          &lt;div className="px-4 py-3 space-y-3"&gt;
+            &lt;Link href="/" className="block"&gt;Home&lt;/Link&gt;
+            &lt;Link href="/dashboard" className="block"&gt;Dashboard&lt;/Link&gt;
+            &lt;Link href="/auth" className="block"&gt;Sign In&lt;/Link&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/header&gt;
+  )
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- Footer -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Footer.tsx</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/components/common/Footer.tsx</span></span>
+              </div>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="footer">คัดลอก</button>
+<pre id="footer"><code class="language-tsx">// src/components/common/Footer.tsx
+export default function Footer() {
+  return (
+    &lt;footer className="border-t mt-10 bg-white"&gt;
+      &lt;div className="mx-auto max-w-7xl px-4 py-8 text-sm text-slate-500 flex items-center justify-between"&gt;
+        &lt;p&gt;© {new Date().getFullYear()} EnglishKorat. All rights reserved.&lt;/p&gt;
+        &lt;p&gt;Built with Next.js + Tailwind CSS&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/footer&gt;
+  )
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- Layout -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Layout.tsx</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/components/common/Layout.tsx</span></span>
+              </div>
+              <p class="text-slate-600 mb-3">ตัวห่อหน้า (wrapper) ใช้ร่วมกับ App Router ได้ หรือใช้เฉพาะหน้าที่ต้องการ</p>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="layout">คัดลอก</button>
+<pre id="layout"><code class="language-tsx">// src/components/common/Layout.tsx
+import Header from './Header'
+import Footer from './Footer'
+import { ReactNode } from 'react'
+
+export default function Layout({ children }: { children: ReactNode }) {
+  return (
+    &lt;div className="min-h-screen flex flex-col"&gt;
+      &lt;Header /&gt;
+      &lt;main className="flex-1"&gt;
+        &lt;div className="mx-auto max-w-7xl px-4 py-8"&gt;{children}&lt;/div&gt;
+      &lt;/main&gt;
+      &lt;Footer /&gt;
+    &lt;/div&gt;
+  )
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- Loading -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Loading.tsx</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/components/common/Loading.tsx</span></span>
+              </div>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="loading">คัดลอก</button>
+<pre id="loading"><code class="language-tsx">// src/components/common/Loading.tsx
+export default function Loading({ label = 'Loading...' }: { label?: string }) {
+  return (
+    &lt;div className="flex items-center gap-3 text-slate-600" role="status" aria-live="polite"&gt;
+      &lt;svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"&gt;
+        &lt;circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/&gt;
+        &lt;path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/&gt;
+      &lt;/svg&gt;
+      &lt;span&gt;{label}&lt;/span&gt;
+    &lt;/div&gt;
+  )
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- AuthForm -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">forms/AuthForm.tsx</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/components/forms/AuthForm.tsx</span></span>
+              </div>
+              <p class="text-slate-600 mb-3">ฟอร์มเข้าสู่ระบบอย่างง่าย</p>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="authform">คัดลอก</button>
+<pre id="authform"><code class="language-tsx">// src/components/forms/AuthForm.tsx
+'use client'
+import { useState } from 'react'
+import Button from '@/components/common/Button'
+import { authService } from '@/services/auth.service'
+import { useRouter } from 'next/navigation'
+import type { LoginPayload } from '@/types/auth.types'
+
+export default function AuthForm() {
+  const router = useRouter()
+  const [form, setForm] = useState&lt;LoginPayload&gt;({ email: '', password: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true); setError(null)
+    try {
+      await authService.login(form)
+      router.push('/dashboard')
+    } catch (err) {
+      setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    &lt;form onSubmit={onSubmit} className="space-y-4 max-w-sm"&gt;
+      &lt;div&gt;
+        &lt;label className="block text-sm mb-1" htmlFor="email"&gt;Email&lt;/label&gt;
+        &lt;input
+          id="email" type="email" required
+          className="w-full rounded-2xl border px-3 py-2 outline-none focus:ring-2 focus:ring-brand-300"
+          value={form.email}
+          onChange={(e) =&gt; setForm({ ...form, email: e.target.value })}
+        /&gt;
+      &lt;/div&gt;
+      &lt;div&gt;
+        &lt;label className="block text-sm mb-1" htmlFor="password"&gt;Password&lt;/label&gt;
+        &lt;input
+          id="password" type="password" required
+          className="w-full rounded-2xl border px-3 py-2 outline-none focus:ring-2 focus:ring-brand-300"
+          value={form.password}
+          onChange={(e) =&gt; setForm({ ...form, password: e.target.value })}
+        /&gt;
+      &lt;/div&gt;
+      {error &amp;&amp; &lt;p className="text-sm text-rose-600"&gt;{error}&lt;/p&gt;}
+      &lt;Button type="submit" isLoading={loading} className="w-full"&gt;Sign in&lt;/Button&gt;
+    &lt;/form&gt;
+  )
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- Hook useAuth -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">hooks/useAuth.ts</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/hooks/useAuth.ts</span></span>
+              </div>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="useauth">คัดลอก</button>
+<pre id="useauth"><code class="language-ts">// src/hooks/useAuth.ts
+'use client'
+import { useEffect, useState } from 'react'
+import { TOKEN_KEY } from '@/utils/constants'
+import { safeLocalStorage } from '@/utils/helpers'
+import type { User } from '@/types/auth.types'
+import { userService } from '@/services/user.service'
+
+export function useAuth() {
+  const [user, setUser] = useState&lt;User | null&gt;(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() =&gt; {
+    const token = safeLocalStorage.get(TOKEN_KEY)
+    if (!token) { setLoading(false); return }
+    userService.getMe().then(setUser).finally(() =&gt; setLoading(false))
+  }, [])
+
+  return { user, loading, setUser }
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- Services -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">services/api.ts, auth.service.ts, user.service.ts</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/services/*</span></span>
+              </div>
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="code-wrap">
+                  <button class="copy-btn kbd" data-copy="api">คัดลอก</button>
+<pre id="api"><code class="language-ts">// src/services/api.ts
+import axios from 'axios'
+import { API_BASE_URL, TOKEN_KEY } from '@/utils/constants'
+
+export const api = axios.create({ baseURL: API_BASE_URL })
+
+api.interceptors.request.use((config) =&gt; {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (token) config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})</code></pre>
+                </div>
+                <div class="code-wrap">
+                  <button class="copy-btn kbd" data-copy="authsvc">คัดลอก</button>
+<pre id="authsvc"><code class="language-ts">// src/services/auth.service.ts
+import { api } from './api'
+import { TOKEN_KEY } from '@/utils/constants'
+import { safeLocalStorage } from '@/utils/helpers'
+import type { AuthResponse, LoginPayload } from '@/types/auth.types'
+
+export const authService = {
+  async login(payload: LoginPayload) {
+    const { data } = await api.post&lt;AuthResponse&gt;('/auth/login', payload)
+    safeLocalStorage.set(TOKEN_KEY, data.token)
+    return data
+  },
+  logout() { safeLocalStorage.remove(TOKEN_KEY) },
+}</code></pre>
+                </div>
+              </div>
+
+              <div class="code-wrap mt-6">
+                <button class="copy-btn kbd" data-copy="usersvc">คัดลอก</button>
+<pre id="usersvc"><code class="language-ts">// src/services/user.service.ts
+import { api } from './api'
+import type { User } from '@/types/auth.types'
+
+export const userService = {
+  async getMe() {
+    const { data } = await api.get&lt;User&gt;('/users/me')
+    return data
+  }
+}</code></pre>
+              </div>
+            </article>
+
+            <!-- Types -->
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">types/auth.types.ts</h3>
+                <span class="text-xs text-slate-500">ไฟล์: <span class="kbd">src/types/auth.types.ts</span></span>
+              </div>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="types">คัดลอก</button>
+<pre id="types"><code class="language-ts">// src/types/auth.types.ts
+export type LoginPayload = { email: string; password: string }
+export type AuthResponse = { token: string; user: User }
+export type User = { id: string; email: string; name: string }
+</code></pre>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Usage -->
+        <section id="usage" class="scroll-mt-28">
+          <h2 class="text-2xl font-bold mb-4">วิธีใช้งาน Components (รวม path Windows)</h2>
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+            <p class="text-slate-700">โฟลเดอร์จริงบน Windows ของคุณ:</p>
+            <p class="p-3 rounded-xl bg-slate-50 border text-sm">C:\Users\iooon\Desktop\englishkorat_frontend\src\components\common</p>
+            <p class="text-slate-600">แต่เวลา <strong>import</strong> ในโค้ด Next.js ให้ใช้ alias <span class="kbd">@</span> ตามตัวอย่างด้านล่าง</p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="import1">คัดลอก</button>
+<pre id="import1"><code class="language-tsx">// ใช้งานปุ่ม
+import Button from '@/components/common/Button'
+
+export default function Example() {
+  return (
+    &lt;div className="space-x-2"&gt;
+      &lt;Button&gt;Primary&lt;/Button&gt;
+      &lt;Button variant="secondary"&gt;Secondary&lt;/Button&gt;
+      &lt;Button variant="ghost" size="sm"&gt;Ghost&lt;/Button&gt;
+    &lt;/div&gt;
+  )
+}</code></pre>
+              </div>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="import2">คัดลอก</button>
+<pre id="import2"><code class="language-tsx">// ใช้งาน Layout รวม Header / Footer
+import Layout from '@/components/common/Layout'
+
+export default function Page() {
+  return (
+    &lt;Layout&gt;
+      &lt;h1 className="text-2xl font-bold"&gt;สวัสดี EnglishKorat&lt;/h1&gt;
+      &lt;p className="text-slate-600"&gt;ยินดีต้อนรับ&lt;/p&gt;
+    &lt;/Layout&gt;
+  )
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pages (App Router) -->
+        <section id="pages" class="scroll-mt-28">
+          <h2 class="text-2xl font-bold mb-4">ตัวอย่างหน้า (App Router)</h2>
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-8">
+            <div class="code-wrap">
+              <button class="copy-btn kbd" data-copy="globals">คัดลอก</button>
+              <p class="text-sm font-medium text-slate-600 mb-2">src/app/globals.css</p>
+<pre id="globals"><code class="language-css">@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; }
+</code></pre>
+            </div>
+
+            <div class="code-wrap">
+              <button class="copy-btn kbd" data-copy="applayout">คัดลอก</button>
+              <p class="text-sm font-medium text-slate-600 mb-2">src/app/layout.tsx</p>
+<pre id="applayout"><code class="language-tsx">import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import Layout from '@/components/common/Layout'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'EnglishKorat',
+  description: 'Demo UI kit with Next.js + Tailwind',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    &lt;html lang="th" className={inter.className}&gt;
+      &lt;body&gt;
+        &lt;Layout&gt;{children}&lt;/Layout&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+  )
+}
+</code></pre>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="homepage">คัดลอก</button>
+                <p class="text-sm font-medium text-slate-600 mb-2">src/app/page.tsx</p>
+<pre id="homepage"><code class="language-tsx">export default function HomePage() {
+  return (
+    &lt;section className="py-10"&gt;
+      &lt;h1 className="text-3xl font-bold mb-2"&gt;Home&lt;/h1&gt;
+      &lt;p className="text-slate-600"&gt;ตัวอย่างหน้าแรก&lt;/p&gt;
+    &lt;/section&gt;
+  )
+}
+</code></pre>
+              </div>
+              <div class="code-wrap">
+                <button class="copy-btn kbd" data-copy="authpage">คัดลอก</button>
+                <p class="text-sm font-medium text-slate-600 mb-2">src/app/auth/page.tsx</p>
+<pre id="authpage"><code class="language-tsx">import AuthForm from '@/components/forms/AuthForm'
+
+export default function AuthPage() {
+  return (
+    &lt;section className="py-10"&gt;
+      &lt;h1 className="text-2xl font-semibold mb-4"&gt;Sign in&lt;/h1&gt;
+      &lt;AuthForm /&gt;
+    &lt;/section&gt;
+  )
+}
+</code></pre>
+              </div>
+            </div>
+
+            <div class="code-wrap">
+              <button class="copy-btn kbd" data-copy="dashpage">คัดลอก</button>
+              <p class="text-sm font-medium text-slate-600 mb-2">src/app/dashboard/page.tsx</p>
+<pre id="dashpage"><code class="language-tsx">import { useAuth } from '@/hooks/useAuth'
+import Loading from '@/components/common/Loading'
+
+export default function DashboardPage() {
+  const { user, loading } = useAuth()
+  if (loading) return &lt;Loading label="กำลังโหลดข้อมูลผู้ใช้..." /&gt;
+  return (
+    &lt;section className="py-10"&gt;
+      &lt;h1 className="text-2xl font-semibold mb-2"&gt;Dashboard&lt;/h1&gt;
+      &lt;p className="text-slate-700"&gt;ยินดีต้อนรับ, {user?.name || 'Guest'}&lt;/p&gt;
+    &lt;/section&gt;
+  )
+}
+</code></pre>
+            </div>
+
+            <div class="rounded-xl bg-slate-50 border p-4 text-sm text-slate-600">
+              <p class="mb-1 font-medium text-slate-700">แพ็คเกจที่ควรติดตั้งเพิ่ม</p>
+              <ul class="list-disc list-inside">
+                <li><span class="kbd">axios</span> (ใช้ใน services)</li>
+                <li><span class="kbd">next/font</span> (มีใน Next.js แล้ว)</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 class="text-xl font-semibold">พร้อมใช้งานแล้ว 🎉</h3>
+              <p class="text-slate-600">คัดลอกไฟล์ตามหัวข้อด้านบนไปวางในโปรเจกต์ของคุณ แล้วทดลองรันได้เลย</p>
+            </div>
+            <a href="#structure" class="inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-5 py-2 text-white hover:bg-brand-700">กลับไปดูโครงสร้าง</a>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <footer class="py-10 text-center text-sm text-slate-500">สร้างโดย: UI Helper • Next.js + Tailwind Guide</footer>
+
+  <script>
+    // Copy buttons for every &lt;pre&gt;
+    document.querySelectorAll('[data-copy]').forEach(btn =&gt; {
+      btn.addEventListener('click', () =&gt; {
+        const id = btn.getAttribute('data-copy');
+        const pre = document.getElementById(id);
+        if (!pre) return;
+        const text = pre.innerText;
+        navigator.clipboard.writeText(text).then(() =&gt; {
+          const backup = btn.textContent; btn.textContent = 'คัดลอกแล้ว!';
+          setTimeout(() =&gt; (btn.textContent = backup), 1200);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
