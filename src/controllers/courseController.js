@@ -93,10 +93,16 @@ const getCourses = asyncHandler(async (req, res) => {
 
   // Apply filters
   if (branch_id) {
+    // ถ้ามีการระบุ branch_id ใน query string ให้ใช้ตามนั้น
     query = query.where('courses.branch_id', branch_id);
   } else if (req.user.role !== 'owner') {
-    // Non-owners can only see their branch courses
-    query = query.where('courses.branch_id', req.user.branch_id);
+    // ถ้าไม่ใช่ owner ให้เห็นคอร์สของ branch ตัวเองและ branch 3 (online)
+    if (req.user.branch_id === 1 || req.user.branch_id === 2) {
+      query = query.whereIn('courses.branch_id', [req.user.branch_id, 3]);
+    } else {
+      // กรณี branch อื่นๆ เห็นเฉพาะของตัวเอง
+      query = query.where('courses.branch_id', req.user.branch_id);
+    }
   }
 
   if (course_type) {
@@ -139,7 +145,12 @@ const getCourse = asyncHandler(async (req, res) => {
 
   // Apply branch restriction for non-owners
   if (req.user.role !== 'owner') {
-    query = query.where('courses.branch_id', req.user.branch_id);
+    // branch 1 และ 2 ดูคอร์ส branch ตัวเองและ branch 3 (online)
+    if (req.user.branch_id === 1 || req.user.branch_id === 2) {
+      query = query.whereIn('courses.branch_id', [req.user.branch_id, 3]);
+    } else {
+      query = query.where('courses.branch_id', req.user.branch_id);
+    }
   }
 
   const course = await query.first();
