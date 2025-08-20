@@ -134,12 +134,12 @@ const getStudents = asyncHandler(async (req, res) => {
     });
   }
 
-  if (branch_id && req.user.role !== 'owner') {
-    query = query.where('users.branch_id', branch_id);
-  } else if (req.user.role !== 'owner') {
-    // Non-owners can only see their branch students
-    query = query.where('users.branch_id', req.user.branch_id);
-  }
+  // if (branch_id && req.user.role !== 'owner') {
+  //   query = query.where('users.branch_id', branch_id);
+  // } else if (req.user.role !== 'owner') {
+  //   // Non-owners can only see their branch students
+  //   query = query.where('users.branch_id', req.user.branch_id);
+  // }
 
   if (status) {
     query = query.where('users.status', status);
@@ -164,11 +164,11 @@ const getStudents = asyncHandler(async (req, res) => {
     });
   }
 
-  if (branch_id && req.user.role !== 'owner') {
-    totalQuery.where('users.branch_id', branch_id);
-  } else if (req.user.role !== 'owner') {
-    totalQuery.where('users.branch_id', req.user.branch_id);
-  }
+  // if (branch_id && req.user.role !== 'owner') {
+  //   totalQuery.where('users.branch_id', branch_id);
+  // } else if (req.user.role !== 'owner') {
+  //   totalQuery.where('users.branch_id', req.user.branch_id);
+  // }
 
   if (status) {
     totalQuery.where('users.status', status);

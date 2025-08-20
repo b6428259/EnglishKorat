@@ -159,17 +159,38 @@ const getProfile = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Update user profile
+
+// @desc    Update user profile (with avatar upload)
 // @route   PUT /api/v1/auth/profile
 // @access  Private
+const { processAny } = require('../middleware/uploadS3');
+const { fileNaming } = require('../config/upload');
+const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const s3 = new S3Client({ region: process.env.AWS_REGION });
+const S3_BUCKET = process.env.S3_BUCKET;
+
 const updateProfile = asyncHandler(async (req, res) => {
   const { email, phone, line_id } = req.body;
   const userId = req.user.id;
-
   const updateData = {};
   if (email !== undefined) updateData.email = email;
   if (phone !== undefined) updateData.phone = phone;
   if (line_id !== undefined) updateData.line_id = line_id;
+
+  // Handle avatar upload
+  if (req.file) {
+    // ลบ avatar เดิมถ้ามี
+    const user = await db('users').select('avatar').where('id', userId).first();
+    if (user && user.avatar) {
+      try {
+        await s3.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: user.avatar }));
+      } catch (err) {
+        // ไม่ต้อง throw error ถ้าลบไม่ได้
+      }
+    }
+    const avatarResult = await processAny(req.file, `avatars/${userId}`);
+    updateData.avatar = avatarResult.variants.find(v => v.variant === 'original')?.key;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return res.status(400).json({
@@ -193,6 +214,61 @@ const updateProfile = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Profile updated successfully',
+    data: { user }
+  });
+});
+
+// @desc    Admin update user profile by ID
+// @route   PUT /api/v1/auth/profile/:id
+// @access  Private (Admin, Owner)
+const updateProfileById = asyncHandler(async (req, res) => {
+  const { email, phone, line_id, role, branch_id, status } = req.body;
+  const userId = req.params.id;
+  const updateData = {};
+  if (email !== undefined) updateData.email = email;
+  if (phone !== undefined) updateData.phone = phone;
+  if (line_id !== undefined) updateData.line_id = line_id;
+  if (role !== undefined) updateData.role = role;
+  if (branch_id !== undefined) updateData.branch_id = branch_id;
+  if (status !== undefined) updateData.status = status;
+
+  // Handle avatar upload
+  if (req.file) {
+    // ลบ avatar เดิมถ้ามี
+    const user = await db('users').select('avatar').where('id', userId).first();
+    if (user && user.avatar) {
+      try {
+        await s3.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: user.avatar }));
+      } catch (err) {
+        // ไม่ต้อง throw error ถ้าลบไม่ได้
+      }
+    }
+    const avatarResult = await processAny(req.file, `avatars/${userId}`);
+    updateData.avatar = avatarResult.variants.find(v => v.variant === 'original')?.key;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'No data to update'
+    });
+  }
+
+  await db('users')
+    .where('id', userId)
+    .update(updateData);
+
+  const user = await db('users')
+    .select('users.*', 'branches.name as branch_name', 'branches.code as branch_code')
+    .leftJoin('branches', 'users.branch_id', 'branches.id')
+    .where('users.id', userId)
+    .first();
+
+  delete user.password;
+
+  res.json({
+    success: true,
+    message: 'Profile updated by admin',
     data: { user }
   });
 });
@@ -244,5 +320,6 @@ module.exports = {
   login,
   getProfile,
   updateProfile,
+  updateProfileById,
   changePassword
 };

@@ -14,6 +14,7 @@ const scheduleRoutes = require('./schedules');
 const leavePolicyRoutes = require('./leavePolicies');
 const changeHistoryRoutes = require('./changeHistory');
 const registrationRoutes = require('./registration');
+const teacherRoutes = require('./teachers'); // Assuming you have a teachers.js route file
 
 // ----- Register route modules -----
 router.use('/auth', authRoutes);
@@ -27,6 +28,7 @@ router.use('/schedules', scheduleRoutes);
 router.use('/leave-policies', leavePolicyRoutes);
 router.use('/policy', changeHistoryRoutes);
 router.use('/registration', registrationRoutes);
+router.use('/teachers', teacherRoutes); // Register teachers routes
 
 // ===== Helpers: scan express routes =====
 function cleanRegexPath(rx) {

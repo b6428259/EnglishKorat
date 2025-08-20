@@ -29,32 +29,25 @@ async function processFile(buffer, originalName, mime, prefix) {
   };
 }
 
-// อัปโหลดไฟล์รูป: original + webp + thumb
+
+// อัปโหลดไฟล์รูป: เฉพาะ webp (original webp, thumb webp)
 async function processImage(buffer, originalName, mime, prefix) {
   const groupId = crypto.randomUUID();
 
-  // original: ใช้ mimetype เดิม (ถ้าไม่รู้ ให้ default เป็น image/jpeg)
-  const ext = (path.extname(originalName) || '').toLowerCase() || '.jpg';
-  const origBuf = await sharp(buffer).withMetadata().toBuffer();
-  const origKey = s3Key(prefix, ext || '.jpg');
-  const origType = mime && mime.startsWith('image/') ? mime : (ext === '.png' ? 'image/png' : 'image/jpeg');
-  await putToS3(origKey, origBuf, origType);
-
-  // webp
+  // original webp
   const webpBuf = await sharp(buffer).webp({ quality: 80 }).toBuffer();
   const webpKey = s3Key(prefix, '.webp');
   await putToS3(webpKey, webpBuf, 'image/webp');
 
-  // thumb (512w)
+  // thumb webp (512w)
   const thumbBuf = await sharp(buffer).resize({ width: 512 }).webp({ quality: 75 }).toBuffer();
-  const thumbKey = s3Key(prefix, '.webp');
+  const thumbKey = s3Key(prefix, '.thumb.webp');
   await putToS3(thumbKey, thumbBuf, 'image/webp');
 
   return {
     groupId,
     variants: [
-      { variant: 'original', key: origKey, mime: origType, size: origBuf.length },
-      { variant: 'webp',     key: webpKey,  mime: 'image/webp', size: webpBuf.length },
+      { variant: 'original', key: webpKey, mime: 'image/webp', size: webpBuf.length },
       { variant: 'thumb',    key: thumbKey, mime: 'image/webp', size: thumbBuf.length },
     ],
     originalName

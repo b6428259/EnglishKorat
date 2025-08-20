@@ -3,7 +3,7 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
-const BUCKET = process.env.AWS_S3_BUCKET;
+const BUCKET = process.env.S3_BUCKET;
 
 function s3Key(prefix, ext = '') {
   const d = new Date();

@@ -6,10 +6,12 @@ const {
   login,
   getProfile,
   updateProfile,
+  updateProfileById,
   changePassword
 } = require('../controllers/authController');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const { handleValidationErrors } = require('../middleware/validationMiddleware');
+const { upload } = require('../middleware/uploadS3');
 
 // Validation rules for registration
 const registerValidation = [
@@ -71,9 +73,11 @@ const changePasswordValidation = [
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
 
+
 // Protected routes
 router.get('/profile', authMiddleware, getProfile);
-router.put('/profile', authMiddleware, updateProfile);
+router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);
+router.put('/profile/:id', authMiddleware, authorize('admin', 'owner'), upload.single('avatar'), updateProfileById);
 router.put('/change-password', authMiddleware, changePasswordValidation, changePassword);
 
 module.exports = router;
