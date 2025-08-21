@@ -6,11 +6,12 @@ const redis = require('redis');
 
 // Create Redis client
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: process.env.REDIS_PORT || 6380,
-  password: process.env.REDIS_PASSWORD || 'adminEKLS1234'
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT
+  },
+  password: process.env.REDIS_PASSWORD
 });
-
 redisClient.on('error', (err) => {
   console.error('Redis connection error:', err);
 });
