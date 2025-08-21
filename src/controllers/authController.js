@@ -2,6 +2,21 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
+const redis = require('redis');
+
+// Create Redis client
+const redisClient = redis.createClient({
+  host: process.env.REDIS_HOST || '127.0.0.1',
+  port: process.env.REDIS_PORT || 6380,
+  password: process.env.REDIS_PASSWORD || 'adminEKLS1234'
+});
+
+redisClient.on('error', (err) => {
+  console.error('Redis connection error:', err);
+});
+
+// Connect to Redis
+redisClient.connect().catch(console.error);
 
 // Generate JWT token
 const generateToken = (userId, role) => {
@@ -273,6 +288,72 @@ const updateProfileById = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Logout user (blacklist token)
+// @route   POST /api/v1/auth/logout
+// @access  Private
+const logout = asyncHandler(async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    // Decode token to get expiration time
+    const decoded = jwt.decode(token);
+    if (!decoded || !decoded.exp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+
+    // Calculate TTL (time to live) for Redis - remaining time until token expires
+    const currentTime = Math.floor(Date.now() / 1000);
+    const tokenTtl = decoded.exp - currentTime;
+    
+    // Only blacklist if token is still valid
+    if (tokenTtl > 0) {
+      // Store token in Redis blacklist with descriptive key
+      const blacklistKey = `auth:blacklist:token:${token.slice(-20)}`;  // Use last 20 chars for uniqueness
+      await redisClient.setEx(blacklistKey, Math.max(tokenTtl, 86400), JSON.stringify({
+        userId: decoded.userId,
+        role: decoded.role,
+        blacklistedAt: new Date().toISOString(),
+        reason: 'user_logout'
+      }));
+
+      console.log(`Token blacklisted: ${blacklistKey}, TTL: ${tokenTtl} seconds`);
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during logout'
+    });
+  }
+});
+
+// @desc    Check if token is blacklisted (utility function)
+const isTokenBlacklisted = async (token) => {
+  try {
+    const blacklistKey = `auth:blacklist:token:${token.slice(-20)}`;
+    const result = await redisClient.get(blacklistKey);
+    return !!result;
+  } catch (error) {
+    console.error('Error checking token blacklist:', error);
+    return false;
+  }
+};
+
 // @desc    Change password
 // @route   PUT /api/v1/auth/change-password
 // @access  Private
@@ -318,8 +399,10 @@ const changePassword = asyncHandler(async (req, res) => {
 module.exports = {
   register,
   login,
+  logout,
   getProfile,
   updateProfile,
   updateProfileById,
-  changePassword
+  changePassword,
+  isTokenBlacklisted
 };

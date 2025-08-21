@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { db } = require('../config/database');
+const { isTokenBlacklisted } = require('../controllers/authController');
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -9,6 +10,15 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ 
         success: false, 
         message: 'Access denied. No token provided.' 
+      });
+    }
+
+    // Check if token is blacklisted
+    const isBlacklisted = await isTokenBlacklisted(token);
+    if (isBlacklisted) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Token has been revoked. Please login again.' 
       });
     }
 

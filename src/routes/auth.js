@@ -4,6 +4,7 @@ const { body } = require('express-validator');
 const {
   register,
   login,
+  logout,
   getProfile,
   updateProfile,
   updateProfileById,
@@ -72,7 +73,7 @@ const changePasswordValidation = [
 // Public routes
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
-
+router.post('/logout', authMiddleware, logout);
 
 // Protected routes
 router.get('/profile', authMiddleware, getProfile);

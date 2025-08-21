@@ -10,6 +10,7 @@ const { ping } = require('./config/database');  // << require after .env
 const apiRoutes = require('./routes');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 const logger = require('./utils/logger');
+const { redisClient } = require('./controllers/authController'); // import redisClient
 
 const app = express();
 
@@ -48,9 +49,17 @@ app.use(express.urlencoded({ extended: true }));
 // Health check
 app.get('/health', async (req, res) => {
   const dbOk = await ping();
+  let redisOk = false;
+  try {
+    await redisClient.ping();
+    redisOk = true;
+  } catch (err) {
+    redisOk = false;
+  }
   res.status(200).json({
     status: 'OK',
     db: dbOk ? 'up' : 'down',
+    redis: redisOk ? 'up' : 'down',
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0'
   });
