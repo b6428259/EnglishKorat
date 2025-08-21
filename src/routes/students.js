@@ -4,7 +4,8 @@ const {
   registerStudent,
   getStudents,
   getStudent,
-  updateStudent
+  updateStudent,
+  updateStudentTestResults
 } = require('../controllers/studentController');
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const { validateStudentRegistration } = require('../middleware/validationMiddleware');
@@ -16,5 +17,8 @@ router.post('/register', validateStudentRegistration, registerStudent);
 router.get('/', authMiddleware, authorize('admin', 'owner'), getStudents);
 router.get('/:id', authMiddleware, getStudent);
 router.put('/:id', authMiddleware, updateStudent);
+
+// Admin-only route for updating test results
+router.put('/:id/test-results', authMiddleware, authorize('admin', 'owner'), updateStudentTestResults);
 
 module.exports = router;

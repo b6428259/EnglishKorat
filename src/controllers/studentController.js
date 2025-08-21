@@ -1,6 +1,13 @@
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
 const { safeJsonParse } = require('../utils/safeJson');
+const { 
+  validateThaiCitizenId, 
+  encryptCitizenId, 
+  generateUsernameFromPhone, 
+  calculateAge, 
+  determineAgeGroup 
+} = require('../utils/citizenIdUtils');
 
 
 // @desc    Register a new student with full details
@@ -8,66 +15,157 @@ const { safeJsonParse } = require('../utils/safeJson');
 // @access  Public
 const registerStudent = asyncHandler(async (req, res) => {
   const {
-    // User account info
-    username,
-    password,
+    // Personal info (from form)
+    firstName,
+    lastName,
+    firstNameEn,
+    lastNameEn,
+    nickName,
+    dateOfBirth,
+    gender,
+    citizenId,
+    address,
+    
+    // Contact info
     email,
     phone,
-    line_id,
+    lineId,
     
-    // Student personal info
-    first_name,
-    last_name,
-    nickname,
-    age,
-    grade_level,
+    // Academic info
+    currentEducation,
+    preferredBranch,
+    preferredLanguage,
+    languageLevel,
+    recentCEFR,
+    learningStyle,
+    learningGoals,
+    selectedCourses,
+    teacherType,
     
-    // Test results
-    cefr_level,
-    grammar_score,
-    speaking_score,
-    listening_score,
+    // Schedule preferences
+    preferredTimeSlots,
+    unavailableTimeSlots,
     
-    // Learning preferences
-    learning_preferences,
-    preferred_teacher_type,
-    contact_source,
-    admin_contact,
-    
-    // Branch selection
-    branch_id
+    // Emergency/Parent contact
+    parentName,
+    parentPhone,
+    emergencyContact,
+    emergencyPhone
   } = req.body;
+
+  // Validate required fields
+  if (!firstName || !lastName || !phone || !citizenId || !dateOfBirth || !preferredBranch) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields: firstName, lastName, phone, citizenId, dateOfBirth, preferredBranch'
+    });
+  }
+
+  // Validate Thai Citizen ID
+  if (!validateThaiCitizenId(citizenId)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid Thai Citizen ID format'
+    });
+  }
+
+  // Calculate age from date of birth
+  const age = calculateAge(dateOfBirth);
+  
+  // Determine age group
+  const ageGroup = determineAgeGroup(currentEducation, age);
+
+  // Generate username from phone number
+  const username = generateUsernameFromPhone(phone);
+  
+  // Use citizen ID as password (will be hashed)
+  const password = citizenId;
+
+  // Encrypt citizen ID for storage
+  const encryptedCitizenId = encryptCitizenId(citizenId);
 
   // Use database transaction
   const result = await db.transaction(async (trx) => {
+    // Check if user with this phone/username already exists
+    const existingUser = await trx('users').where('username', username).first();
+    if (existingUser) {
+      throw new Error('User with this phone number already exists');
+    }
+
+    // Check if citizen ID already exists
+    const existingCitizenId = await trx('students').where('citizen_id', encryptedCitizenId).first();
+    if (existingCitizenId) {
+      throw new Error('Citizen ID already registered');
+    }
+
     // Create user account
     const [userId] = await trx('users').insert({
       username,
       password: require('bcryptjs').hashSync(password, 10),
-      email,
+      email: email || null,
       phone,
-      line_id,
+      line_id: lineId || null,
       role: 'student',
-      branch_id,
+      branch_id: preferredBranch,
       status: 'active'
     });
 
     // Create student profile
     const [studentId] = await trx('students').insert({
       user_id: userId,
-      first_name,
-      last_name,
-      nickname,
-      age,
-      grade_level,
-      cefr_level,
-      grammar_score,
-      speaking_score,
-      listening_score,
-      learning_preferences: JSON.stringify(learning_preferences || {}),
-      preferred_teacher_type,
-      contact_source,
-      admin_contact
+      first_name: firstName,
+      last_name: lastName,
+      first_name_en: firstNameEn || null,
+      last_name_en: lastNameEn || null,
+      nickname: nickName || null,
+      date_of_birth: dateOfBirth,
+      gender: gender || null,
+      age: age,
+      age_group: ageGroup,
+      address: address || null,
+      citizen_id: encryptedCitizenId,
+      
+      // Academic info
+      current_education: currentEducation || null,
+      preferred_language: preferredLanguage || null,
+      language_level: languageLevel || null,
+      recent_cefr: recentCEFR || null,
+      learning_style: learningStyle || null,
+      learning_goals: learningGoals || null,
+      
+      // Contact info
+      parent_name: parentName || null,
+      parent_phone: parentPhone || null,
+      emergency_contact: emergencyContact || null,
+      emergency_phone: emergencyPhone || null,
+      
+      // Schedule and courses (JSON fields)
+      preferred_time_slots: JSON.stringify(preferredTimeSlots || []),
+      unavailable_time_slots: JSON.stringify(unavailableTimeSlots || []),
+      selected_courses: JSON.stringify(selectedCourses || []),
+      
+      // Test scores and admin fields (empty for now - will be updated by admin)
+      cefr_level: null,
+      grammar_score: null,
+      speaking_score: null,
+      listening_score: null,
+      reading_score: null,
+      writing_score: null,
+      admin_contact: null,
+      
+      // Registration status
+      registration_status: 'ยังไม่สอบ',
+      
+      // Teacher preference
+      preferred_teacher_type: teacherType || 'any',
+      
+      // Learning preferences (for compatibility)
+      learning_preferences: JSON.stringify({
+        preferredLanguage: preferredLanguage,
+        languageLevel: languageLevel,
+        learningStyle: learningStyle,
+        teacherType: teacherType
+      })
     });
 
     return { userId, studentId };
@@ -89,10 +187,22 @@ const registerStudent = asyncHandler(async (req, res) => {
     .where('students.id', result.studentId)
     .first();
 
+  // Parse JSON fields safely
+  student.preferred_time_slots = safeJsonParse(student.preferred_time_slots);
+  student.unavailable_time_slots = safeJsonParse(student.unavailable_time_slots);
+  student.selected_courses = safeJsonParse(student.selected_courses);
+  student.learning_preferences = safeJsonParse(student.learning_preferences);
+  
+  // Remove sensitive data
+  delete student.citizen_id;
+
   res.status(201).json({
     success: true,
-    message: 'Student registered successfully',
-    data: { student }
+    message: 'Student registered successfully. Status: ยังไม่สอบ (Waiting for test)',
+    data: { 
+      student,
+      note: 'Username is phone number, password is citizen ID. Admin will update test scores later.'
+    }
   });
 });
 
@@ -223,6 +333,12 @@ const getStudent = asyncHandler(async (req, res) => {
 
   // ✅ parse แบบปลอดภัย (ไม่พังถ้าไม่ใช่ JSON)
   student.learning_preferences = safeJsonParse(student.learning_preferences);
+  student.preferred_time_slots = safeJsonParse(student.preferred_time_slots);
+  student.unavailable_time_slots = safeJsonParse(student.unavailable_time_slots);
+  student.selected_courses = safeJsonParse(student.selected_courses);
+  
+  // Remove sensitive data
+  delete student.citizen_id;
 
   return res.json({ success: true, data: { student } });
 });
@@ -265,19 +381,32 @@ const updateStudent = asyncHandler(async (req, res) => {
 
   // Prepare update data
   const allowedFields = [
-    'first_name', 'last_name', 'nickname', 'age', 'grade_level',
-    'cefr_level', 'grammar_score', 'speaking_score', 'listening_score',
-    'learning_preferences', 'preferred_teacher_type', 'contact_source'
+    'first_name', 'last_name', 'first_name_en', 'last_name_en', 'nickname', 
+    'date_of_birth', 'gender', 'age', 'current_education', 'address',
+    'preferred_language', 'language_level', 'recent_cefr', 'learning_style',
+    'learning_goals', 'parent_name', 'parent_phone', 'emergency_contact', 
+    'emergency_phone', 'cefr_level', 'grammar_score', 'speaking_score', 
+    'listening_score', 'reading_score', 'writing_score', 'learning_preferences', 
+    'preferred_teacher_type', 'contact_source'
   ];
 
   const studentUpdateData = {};
   for (const field of allowedFields) {
     if (updateData[field] !== undefined) {
-      if (field === 'learning_preferences' && typeof updateData[field] === 'object') {
+      if (['learning_preferences', 'preferred_time_slots', 'unavailable_time_slots', 'selected_courses'].includes(field) 
+          && typeof updateData[field] === 'object') {
         studentUpdateData[field] = JSON.stringify(updateData[field]);
       } else {
         studentUpdateData[field] = updateData[field];
       }
+    }
+  }
+
+  // Handle JSON fields separately
+  const jsonFields = ['preferred_time_slots', 'unavailable_time_slots', 'selected_courses'];
+  for (const field of jsonFields) {
+    if (updateData[field] !== undefined) {
+      studentUpdateData[field] = JSON.stringify(updateData[field]);
     }
   }
 
@@ -307,6 +436,18 @@ const updateStudent = asyncHandler(async (req, res) => {
   if (updatedStudent.learning_preferences) {
     updatedStudent.learning_preferences = JSON.parse(updatedStudent.learning_preferences);
   }
+  if (updatedStudent.preferred_time_slots) {
+    updatedStudent.preferred_time_slots = JSON.parse(updatedStudent.preferred_time_slots);
+  }
+  if (updatedStudent.unavailable_time_slots) {
+    updatedStudent.unavailable_time_slots = JSON.parse(updatedStudent.unavailable_time_slots);
+  }
+  if (updatedStudent.selected_courses) {
+    updatedStudent.selected_courses = JSON.parse(updatedStudent.selected_courses);
+  }
+  
+  // Remove sensitive data
+  delete updatedStudent.citizen_id;
 
   res.json({
     success: true,
@@ -315,9 +456,113 @@ const updateStudent = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Update student test results and status (Admin only)
+// @route   PUT /api/v1/students/:id/test-results
+// @access  Private (Admin, Owner)
+const updateStudentTestResults = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    cefr_level,
+    grammar_score,
+    speaking_score,
+    listening_score,
+    reading_score,
+    writing_score,
+    admin_contact,
+    notes
+  } = req.body;
+
+  // Check if user is admin or owner
+  if (!['admin', 'owner'].includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Admin or Owner role required.'
+    });
+  }
+
+  // Get current student to check permissions
+  const student = await db('students')
+    .join('users', 'students.user_id', 'users.id')
+    .select('students.*', 'users.branch_id')
+    .where('students.id', id)
+    .first();
+
+  if (!student) {
+    return res.status(404).json({
+      success: false,
+      message: 'Student not found'
+    });
+  }
+
+  // Check branch permissions (owners can access all branches)
+  if (req.user.role !== 'owner' && student.branch_id !== req.user.branch_id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Cannot access other branch data.'
+    });
+  }
+
+  // Update test results and change status
+  const updateData = {
+    cefr_level,
+    grammar_score,
+    speaking_score,
+    listening_score,
+    reading_score,
+    writing_score,
+    admin_contact: admin_contact || req.user.username,
+    registration_status: 'รอติดตาม', // Change status to "waiting for follow-up"
+    last_status_update: new Date()
+  };
+
+  // Remove undefined fields
+  Object.keys(updateData).forEach(key => {
+    if (updateData[key] === undefined) {
+      delete updateData[key];
+    }
+  });
+
+  await db('students')
+    .where('id', id)
+    .update(updateData);
+
+  // Get updated student data
+  const updatedStudent = await db('students')
+    .join('users', 'students.user_id', 'users.id')
+    .join('branches', 'users.branch_id', 'branches.id')
+    .select(
+      'students.*',
+      'users.username',
+      'users.email',
+      'users.phone',
+      'users.line_id',
+      'users.status',
+      'branches.name as branch_name',
+      'branches.code as branch_code'
+    )
+    .where('students.id', id)
+    .first();
+
+  // Parse JSON fields safely
+  updatedStudent.preferred_time_slots = safeJsonParse(updatedStudent.preferred_time_slots);
+  updatedStudent.unavailable_time_slots = safeJsonParse(updatedStudent.unavailable_time_slots);
+  updatedStudent.selected_courses = safeJsonParse(updatedStudent.selected_courses);
+  updatedStudent.learning_preferences = safeJsonParse(updatedStudent.learning_preferences);
+  
+  // Remove sensitive data
+  delete updatedStudent.citizen_id;
+
+  res.json({
+    success: true,
+    message: 'Test results updated successfully. Status changed to รอติดตาม',
+    data: { student: updatedStudent }
+  });
+});
+
 module.exports = {
   registerStudent,
   getStudents,
   getStudent,
-  updateStudent
+  updateStudent,
+  updateStudentTestResults
 };

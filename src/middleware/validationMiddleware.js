@@ -47,49 +47,120 @@ const validateUserRegistration = [
   handleValidationErrors
 ];
 
-// Student registration validation
+// Student registration validation - Updated for new fields
 const validateStudentRegistration = [
-  body('first_name')
+  body('firstName')
     .notEmpty()
     .withMessage('First name is required')
     .isLength({ max: 100 })
     .withMessage('First name must not exceed 100 characters'),
   
-  body('last_name')
+  body('lastName')
     .notEmpty()
     .withMessage('Last name is required')
     .isLength({ max: 100 })
     .withMessage('Last name must not exceed 100 characters'),
   
-  body('nickname')
+  body('phone')
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .matches(/^[0-9+\-\s()]+$/)
+    .withMessage('Invalid phone number format'),
+  
+  body('citizenId')
+    .notEmpty()
+    .withMessage('Citizen ID is required')
+    .isLength({ min: 13, max: 13 })
+    .withMessage('Citizen ID must be exactly 13 digits')
+    .matches(/^[0-9]{13}$/)
+    .withMessage('Citizen ID must contain only numbers'),
+  
+  body('dateOfBirth')
+    .notEmpty()
+    .withMessage('Date of birth is required')
+    .isDate()
+    .withMessage('Invalid date format'),
+  
+  body('preferredBranch')
+    .notEmpty()
+    .withMessage('Preferred branch is required')
+    .isInt({ min: 1 })
+    .withMessage('Branch ID must be a positive integer'),
+  
+  body('firstNameEn')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('English first name must not exceed 100 characters'),
+  
+  body('lastNameEn')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('English last name must not exceed 100 characters'),
+  
+  body('nickName')
     .optional()
     .isLength({ max: 50 })
     .withMessage('Nickname must not exceed 50 characters'),
   
-  body('age')
+  body('gender')
     .optional()
-    .isInt({ min: 5, max: 100 })
-    .withMessage('Age must be between 5 and 100'),
+    .isIn(['male', 'female', 'other'])
+    .withMessage('Gender must be male, female, or other'),
   
-  body('cefr_level')
+  body('email')
     .optional()
-    .isIn(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
-    .withMessage('Invalid CEFR level'),
+    .isEmail()
+    .withMessage('Must be a valid email address'),
   
-  body('grammar_score')
+  body('lineId')
     .optional()
-    .isInt({ min: 0, max: 100 })
-    .withMessage('Grammar score must be between 0 and 100'),
+    .isLength({ max: 50 })
+    .withMessage('LINE ID must not exceed 50 characters'),
   
-  body('speaking_score')
+  body('currentEducation')
     .optional()
-    .isInt({ min: 0, max: 100 })
-    .withMessage('Speaking score must be between 0 and 100'),
+    .isLength({ max: 50 })
+    .withMessage('Current education must not exceed 50 characters'),
   
-  body('listening_score')
+  body('preferredLanguage')
     .optional()
-    .isInt({ min: 0, max: 100 })
-    .withMessage('Listening score must be between 0 and 100'),
+    .isIn(['english', 'chinese'])
+    .withMessage('Preferred language must be english or chinese'),
+  
+  body('languageLevel')
+    .optional()
+    .isLength({ max: 30 })
+    .withMessage('Language level must not exceed 30 characters'),
+  
+  body('recentCEFR')
+    .optional()
+    .isLength({ max: 10 })
+    .withMessage('Recent CEFR must not exceed 10 characters'),
+  
+  body('learningStyle')
+    .optional()
+    .isIn(['private', 'pair', 'group'])
+    .withMessage('Learning style must be private, pair, or group'),
+  
+  body('teacherType')
+    .optional()
+    .isIn(['thai', 'native', 'any'])
+    .withMessage('Teacher type must be thai, native, or any'),
+  
+  body('selectedCourses')
+    .optional()
+    .isArray()
+    .withMessage('Selected courses must be an array'),
+  
+  body('preferredTimeSlots')
+    .optional()
+    .isArray()
+    .withMessage('Preferred time slots must be an array'),
+  
+  body('unavailableTimeSlots')
+    .optional()
+    .isArray()
+    .withMessage('Unavailable time slots must be an array'),
   
   handleValidationErrors
 ];
