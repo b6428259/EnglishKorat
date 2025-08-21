@@ -2,10 +2,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
-const redis = require('redis');
 
-// Create Redis client
-const redisClient = redis.createClient({
+const { createClient } = require('redis');
+const redisClient = createClient({
   socket: {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT
