@@ -404,5 +404,6 @@ module.exports = {
   updateProfile,
   updateProfileById,
   changePassword,
-  isTokenBlacklisted
+  isTokenBlacklisted,
+  redisClient
 };
