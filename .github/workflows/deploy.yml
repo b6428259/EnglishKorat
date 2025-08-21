@@ -28,7 +28,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: ".env"
-          target: "/home/ubuntu/EKLS/.env"
+          target: "/home/ubuntu/EKLS"
 
       - name: SSH and restart Docker
         uses: appleboy/ssh-action@v0.1.10
