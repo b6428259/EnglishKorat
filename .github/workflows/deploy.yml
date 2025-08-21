@@ -41,4 +41,4 @@ jobs:
             docker build -t ekls-app .
             docker stop ekls-app || true
             docker rm ekls-app || true
-            docker run -d --name ekls-app --env-file /home/ubuntu/EKLS/.env -p 3000:3000 ekls-app:latest
+            docker run -d --name ekls-app --network ekorat-cloud_default --env-file /home/ubuntu/EKLS/.env -p 3000:3000 ekls-app:latest
