@@ -49,10 +49,13 @@ app.get('/health', async (req, res) => {
   let redisOk = false;
   let redisError = null;
   try {
-    // รอ connect ถ้ายังไม่พร้อม
-    if (!redisClient.isOpen) await redisClient.connect();
-    await redisClient.ping();
-    redisOk = true;
+    if (redisClient && typeof redisClient.ping === 'function') {
+      // ถ้า redisClient มี method ping
+      await redisClient.ping();
+      redisOk = true;
+    } else {
+      redisError = 'redisClient.ping is not a function';
+    }
   } catch (err) {
     redisOk = false;
     redisError = err.message;
