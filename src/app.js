@@ -14,9 +14,6 @@ const { redisClient } = require('./controllers/authController'); // import redis
 
 const app = express();
 
-// Trust proxy for Nginx reverse proxy
-app.set('trust proxy', true);
-
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -50,16 +47,21 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/health', async (req, res) => {
   const dbOk = await ping();
   let redisOk = false;
+  let redisError = null;
   try {
+    // รอ connect ถ้ายังไม่พร้อม
+    if (!redisClient.isOpen) await redisClient.connect();
     await redisClient.ping();
     redisOk = true;
   } catch (err) {
     redisOk = false;
+    redisError = err.message;
   }
   res.status(200).json({
     status: 'OK',
     db: dbOk ? 'up' : 'down',
     redis: redisOk ? 'up' : 'down',
+    redisError,
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0'
   });
