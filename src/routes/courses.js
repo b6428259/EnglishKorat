@@ -10,16 +10,14 @@ const {
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const { validateCourse } = require('../middleware/validationMiddleware');
 
-// All routes require authentication
-router.use(authMiddleware);
 
 // Public course listing (all authenticated users can view courses)
 router.get('/', getCourses);
 router.get('/:id', getCourse);
 
 // Admin/Owner only routes
-router.post('/', authorize('admin', 'owner'), validateCourse, createCourse);
-router.put('/:id', authorize('admin', 'owner'), updateCourse);
-router.delete('/:id', authorize('admin', 'owner'), deleteCourse);
+router.post('/', authMiddleware, authorize('admin', 'owner'), validateCourse, createCourse);
+router.put('/:id', authMiddleware, authorize('admin', 'owner'), updateCourse);
+router.delete('/:id', authMiddleware, authorize('admin', 'owner'), deleteCourse);
 
 module.exports = router;
