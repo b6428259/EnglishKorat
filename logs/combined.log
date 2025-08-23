@@ -1084,3 +1084,12 @@
 {"level":"info","message":"::1 - - [23/Aug/2025:17:38:55 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:38:55"}
 {"level":"error","message":"500 - SQLITE_CONSTRAINT: CHECK constraint failed: registration_status - /api/v1/students/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 17:39:47"}
 {"level":"info","message":"::1 - - [23/Aug/2025:17:39:47 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:39:47"}
+{"level":"info","message":"✅ Database connection established","service":"english-korat-api","timestamp":"2025-08-23 17:40:24"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-23 17:40:24"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-23 17:40:24"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:40:45 +0000] \"GET /api/v1/students?limit=3 HTTP/1.1\" 401 63 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:40:45"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:41:30 +0000] \"POST /api/v1/students/register HTTP/1.1\" 404 62 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:41:30"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:42:17 +0000] \"POST /api/v1/students/register HTTP/1.1\" 404 62 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:42:17"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:42:59 +0000] \"POST /api/v1/students/register HTTP/1.1\" 404 62 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:42:59"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:44:46 +0000] \"POST /api/v1/students/register HTTP/1.1\" 404 62 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:44:46"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:45:02 +0000] \"POST /api/v1/students/register HTTP/1.1\" 404 62 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:45:02"}

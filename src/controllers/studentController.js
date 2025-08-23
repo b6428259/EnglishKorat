@@ -84,20 +84,26 @@ const registerStudent = asyncHandler(async (req, res) => {
   // Encrypt citizen ID for storage
   const encryptedCitizenId = encryptCitizenId(citizenId);
 
-  // Use database transaction
-  const result = await directDB.transaction(async (trx) => {
+  // Create user and student (simplified approach without transactions for now)
+  try {
     // Check if user with this phone/username already exists
     const existingUserSQL = 'SELECT * FROM users WHERE username = ? LIMIT 1';
-    const existingUsers = await trx.query(existingUserSQL, [username]);
+    const existingUsers = await directDB.query(existingUserSQL, [username]);
     if (existingUsers.length > 0) {
-      throw new Error('User with this phone number already exists');
+      return res.status(400).json({
+        success: false,
+        message: 'User with this phone number already exists'
+      });
     }
 
     // Check if citizen ID already exists
     const existingCitizenSQL = 'SELECT * FROM students WHERE citizen_id = ? LIMIT 1';
-    const existingCitizens = await trx.query(existingCitizenSQL, [encryptedCitizenId]);
+    const existingCitizens = await directDB.query(existingCitizenSQL, [encryptedCitizenId]);
     if (existingCitizens.length > 0) {
-      throw new Error('Citizen ID already registered');
+      return res.status(400).json({
+        success: false,
+        message: 'Citizen ID already registered'
+      });
     }
 
     // Create user account
@@ -105,7 +111,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       INSERT INTO users (username, password, email, phone, line_id, role, branch_id, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, 'student', ?, 'active', datetime('now'), datetime('now'))
     `;
-    const userResult = await trx.query(insertUserSQL, [
+    const userResult = await directDB.query(insertUserSQL, [
       username,
       require('bcryptjs').hashSync(password, 10),
       email || null,
@@ -115,106 +121,133 @@ const registerStudent = asyncHandler(async (req, res) => {
     ]);
     const userId = userResult.insertId;
 
-    // Create student profile with simplified approach
-    const insertParams = [
-        userId,
-        firstName,
-        lastName,
-        firstNameEn || null,
-        lastNameEn || null,
-        nickName || null,
-        dateOfBirth,
-        gender || null,
-        age,
-        ageGroup,
-        address || null,
-        encryptedCitizenId,
-        currentEducation || null,
-        preferredLanguage || null,
-        languageLevel || null,
-        recentCEFR || null,
-        learningStyle || null,
-        learningGoals || null,
-        parentName || null,
-        parentPhone || null,
-        emergencyContact || null,
-        emergencyPhone || null,
-        JSON.stringify(preferredTimeSlots || []),
-        JSON.stringify(unavailableTimeSlots || []),
-        JSON.stringify(selectedCourses || []),
-        'finding_group', // registration_status
-        teacherType || 'any',
-        JSON.stringify({
-          preferredLanguage: preferredLanguage,
-          languageLevel: languageLevel,
-          learningStyle: learningStyle,
-          teacherType: teacherType
-        })
-    ];
-    
-    console.log('Insert params count:', insertParams.length);
-    console.log('Registration status param:', insertParams[25]);
-    
-    const studentResult = await trx.query(
-      `INSERT INTO students (
-        user_id, first_name, last_name, first_name_en, last_name_en, nickname,
-        date_of_birth, gender, age, age_group, address, citizen_id,
-        current_education, preferred_language, language_level, recent_cefr,
-        learning_style, learning_goals, parent_name, parent_phone,
-        emergency_contact, emergency_phone, preferred_time_slots, 
-        unavailable_time_slots, selected_courses, registration_status,
-        preferred_teacher_type, learning_preferences,
+    // Create student profile - basic fields first
+    const insertStudentSQL = `
+      INSERT INTO students (
+        user_id, first_name, last_name, nickname, registration_status,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      insertParams
-    );
+      ) VALUES (?, ?, ?, ?, 'finding_group', datetime('now'), datetime('now'))
+    `;
+    
+    const studentResult = await directDB.query(insertStudentSQL, [
+      userId,
+      firstName,
+      lastName,
+      nickName || null
+    ]);
     const studentId = studentResult.insertId;
+    console.log('Created student with ID:', studentId);
 
-    return { userId, studentId };
-  });
+    // Update student with additional fields
+    const updateStudentSQL = `
+      UPDATE students SET
+        first_name_en = ?,
+        last_name_en = ?,
+        date_of_birth = ?,
+        gender = ?,
+        age = ?,
+        age_group = ?,
+        address = ?,
+        citizen_id = ?,
+        current_education = ?,
+        preferred_language = ?,
+        language_level = ?,
+        recent_cefr = ?,
+        learning_style = ?,
+        learning_goals = ?,
+        parent_name = ?,
+        parent_phone = ?,
+        emergency_contact = ?,
+        emergency_phone = ?,
+        preferred_time_slots = ?,
+        unavailable_time_slots = ?,
+        selected_courses = ?,
+        preferred_teacher_type = ?,
+        learning_preferences = ?
+      WHERE id = ?
+    `;
+    
+    await directDB.query(updateStudentSQL, [
+      firstNameEn || null,
+      lastNameEn || null,
+      dateOfBirth,
+      gender || null,
+      age,
+      ageGroup,
+      address || null,
+      encryptedCitizenId,
+      currentEducation || null,
+      preferredLanguage || null,
+      languageLevel || null,
+      recentCEFR || null,
+      learningStyle || null,
+      learningGoals || null,
+      parentName || null,
+      parentPhone || null,
+      emergencyContact || null,
+      emergencyPhone || null,
+      JSON.stringify(preferredTimeSlots || []),
+      JSON.stringify(unavailableTimeSlots || []),
+      JSON.stringify(selectedCourses || []),
+      teacherType || 'any',
+      JSON.stringify({
+        preferredLanguage: preferredLanguage,
+        languageLevel: languageLevel,
+        learningStyle: learningStyle,
+        teacherType: teacherType
+      }),
+      studentId
+    ]);
 
-  // Get complete student data
-  const studentSQL = `
-    SELECT 
-      students.*,
-      users.username,
-      users.email,
-      users.phone,
-      users.line_id,
-      branches.name as branch_name,
-      branches.code as branch_code
-    FROM students 
-    JOIN users ON students.user_id = users.id
-    JOIN branches ON users.branch_id = branches.id
-    WHERE students.id = ?
-  `;
-  const students = await directDB.query(studentSQL, [result.studentId]);
-  const student = students[0];
+    // Get complete student data 
+    const studentSQL = `
+      SELECT 
+        students.*,
+        users.username,
+        users.email,
+        users.phone,
+        users.line_id,
+        branches.name as branch_name,
+        branches.code as branch_code
+      FROM students 
+      JOIN users ON students.user_id = users.id
+      JOIN branches ON users.branch_id = branches.id
+      WHERE students.id = ?
+    `;
+    const students = await directDB.query(studentSQL, [studentId]);
+    const student = students[0];
 
-  if (!student) {
-    return res.status(404).json({
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found after creation'
+      });
+    }
+
+    // Parse JSON fields safely
+    student.preferred_time_slots = safeJsonParse(student.preferred_time_slots);
+    student.unavailable_time_slots = safeJsonParse(student.unavailable_time_slots);
+    student.selected_courses = safeJsonParse(student.selected_courses);
+    student.learning_preferences = safeJsonParse(student.learning_preferences);
+    
+    // Remove sensitive data
+    delete student.citizen_id;
+
+    res.status(201).json({
+      success: true,
+      message: 'Student registered successfully. Status: finding_group (Ready for group placement)',
+      data: { 
+        student,
+        note: 'Username is phone number, password is citizen ID. Student will be placed in appropriate group.'
+      }
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Student not found after creation'
+      message: error.message || 'Failed to register student'
     });
   }
-
-  // Parse JSON fields safely
-  student.preferred_time_slots = safeJsonParse(student.preferred_time_slots);
-  student.unavailable_time_slots = safeJsonParse(student.unavailable_time_slots);
-  student.selected_courses = safeJsonParse(student.selected_courses);
-  student.learning_preferences = safeJsonParse(student.learning_preferences);
-  
-  // Remove sensitive data
-  delete student.citizen_id;
-
-  res.status(201).json({
-    success: true,
-    message: 'Student registered successfully. Status: finding_group (Ready for group placement)',
-    data: { 
-      student,
-      note: 'Username is phone number, password is citizen ID. Student will be placed in appropriate group.'
-    }
-  });
 });
 
 // @desc    Get all students
