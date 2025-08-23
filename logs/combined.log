@@ -1067,3 +1067,5 @@
 {"level":"error","message":"404 - Not found - /api/v1/nonexistent-endpoint - /api/v1/nonexistent-endpoint - GET - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
 {"level":"error","message":"400 - Unexpected token 'i', \"invalid json data\" is not valid JSON - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
 {"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-23 19:00:21"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-23 19:00:21"}
