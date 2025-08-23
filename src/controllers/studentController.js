@@ -1,4 +1,5 @@
-const { db, transaction } = require('../config/database');
+const { db } = require('../config/database');
+const { transaction } = require('../config/mysql');
 const asyncHandler = require('../utils/asyncHandler');
 const { safeJsonParse } = require('../utils/safeJson');
 const { 
