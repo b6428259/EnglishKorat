@@ -5,6 +5,7 @@ const router = express.Router();
 // ----- Import route modules -----
 const authRoutes = require('./auth');
 const studentRoutes = require('./students');
+const studentRoute = require('./student'); // Singular route for registration
 const courseRoutes = require('./courses');
 const roomRoutes = require('./rooms');
 const enrollmentRoutes = require('./enrollments');
@@ -18,6 +19,7 @@ const teacherRoutes = require('./teachers'); // Assuming you have a teachers.js 
 
 // ----- Register route modules -----
 router.use('/auth', authRoutes);
+router.use('/student', studentRoute); // Singular route for registration
 router.use('/students', studentRoutes);
 router.use('/courses', courseRoutes);
 router.use('/rooms', roomRoutes);

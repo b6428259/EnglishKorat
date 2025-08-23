@@ -1067,3 +1067,8 @@
 {"level":"error","message":"404 - Not found - /api/v1/nonexistent-endpoint - /api/v1/nonexistent-endpoint - GET - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
 {"level":"error","message":"400 - Unexpected token 'i', \"invalid json data\" is not valid JSON - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
 {"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-23 20:01:02"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-23 20:01:02"}
+{"level":"info","message":"::1 - - [23/Aug/2025:20:01:25 +0000] \"GET /api/v1/ HTTP/1.1\" 200 2974 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 20:01:25"}
+{"level":"error","message":"500 - getaddrinfo ENOTFOUND ekorat-db.c96wcau48ea0.ap-southeast-1.rds.amazonaws.com - /api/v1/student/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 20:01:49"}
+{"level":"info","message":"::1 - - [23/Aug/2025:20:01:49 +0000] \"POST /api/v1/student/register HTTP/1.1\" 500 285 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 20:01:49"}

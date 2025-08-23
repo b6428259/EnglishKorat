@@ -107,7 +107,8 @@ const registerStudent = asyncHandler(async (req, res) => {
       line_id: lineId || null,
       role: 'student',
       branch_id: preferredBranch,
-      status: 'active'
+      status: 'active',
+      registration_status: 'pending_exam'
     });
 
     // Create student profile
@@ -154,7 +155,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       admin_contact: null,
       
       // Registration status
-      registration_status: 'ยังไม่สอบ',
+      registration_status: 'pending_exam',
       
       // Teacher preference
       preferred_teacher_type: teacherType || 'any',
@@ -181,6 +182,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       'users.email',
       'users.phone',
       'users.line_id',
+      'users.registration_status as user_registration_status',
       'branches.name as branch_name',
       'branches.code as branch_code'
     )
@@ -224,11 +226,13 @@ const getStudents = asyncHandler(async (req, res) => {
       'students.age',
       'students.grade_level',
       'students.cefr_level',
+      'students.registration_status',
       'users.username',
       'users.email',
       'users.phone',
       'users.line_id',
       'users.status',
+      'users.registration_status as user_registration_status',
       'branches.name as branch_name',
       'branches.code as branch_code',
       'students.created_at'
@@ -316,6 +320,7 @@ const getStudent = asyncHandler(async (req, res) => {
       'users.phone',
       'users.line_id',
       'users.status',
+      'users.registration_status as user_registration_status',
       'branches.name as branch_name',
       'branches.code as branch_code'
     )
