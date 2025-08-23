@@ -3,12 +3,12 @@
  * Provides common CRUD operations and query building
  */
 
-const knex = require('../config/database');
+const { db } = require('../config/database');
 
 class BaseModel {
   constructor(tableName) {
     this.tableName = tableName;
-    this.knex = knex;
+    this.db = db;
   }
 
   // Find by ID

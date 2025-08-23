@@ -1,4 +1,4 @@
-const { db } = require('../config/database');
+const { db, transaction } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
 const { safeJsonParse } = require('../utils/safeJson');
 const { 
@@ -85,107 +85,128 @@ const registerStudent = asyncHandler(async (req, res) => {
   const encryptedCitizenId = encryptCitizenId(citizenId);
 
   // Use database transaction
-  const result = await db.transaction(async (trx) => {
+  const result = await transaction(async (connection) => {
     // Check if user with this phone/username already exists
-    const existingUser = await trx('users').where('username', username).first();
-    if (existingUser) {
+    const [existingUsers] = await connection.execute(
+      'SELECT id FROM users WHERE username = ?',
+      [username]
+    );
+    if (existingUsers.length > 0) {
       throw new Error('User with this phone number already exists');
     }
 
     // Check if citizen ID already exists
-    const existingCitizenId = await trx('students').where('citizen_id', encryptedCitizenId).first();
-    if (existingCitizenId) {
+    const [existingCitizenIds] = await connection.execute(
+      'SELECT id FROM students WHERE citizen_id = ?',
+      [encryptedCitizenId]
+    );
+    if (existingCitizenIds.length > 0) {
       throw new Error('Citizen ID already registered');
     }
 
     // Create user account
-    const [userId] = await trx('users').insert({
-      username,
-      password: require('bcryptjs').hashSync(password, 10),
-      email: email || null,
-      phone,
-      line_id: lineId || null,
-      role: 'student',
-      branch_id: preferredBranch,
-      status: 'active'
-    });
+    const [userResult] = await connection.execute(
+      `INSERT INTO users (username, password, email, phone, line_id, role, branch_id, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        username,
+        require('bcryptjs').hashSync(password, 10),
+        email || null,
+        phone,
+        lineId || null,
+        'student',
+        preferredBranch,
+        'active'
+      ]
+    );
+
+    const userId = userResult.insertId;
 
     // Create student profile
-    const [studentId] = await trx('students').insert({
-      user_id: userId,
-      first_name: firstName,
-      last_name: lastName,
-      first_name_en: firstNameEn || null,
-      last_name_en: lastNameEn || null,
-      nickname: nickName || null,
-      date_of_birth: dateOfBirth,
-      gender: gender || null,
-      age: age,
-      age_group: ageGroup,
-      address: address || null,
-      citizen_id: encryptedCitizenId,
-      
-      // Academic info
-      current_education: currentEducation || null,
-      preferred_language: preferredLanguage || null,
-      language_level: languageLevel || null,
-      recent_cefr: recentCEFR || null,
-      learning_style: learningStyle || null,
-      learning_goals: learningGoals || null,
-      
-      // Contact info
-      parent_name: parentName || null,
-      parent_phone: parentPhone || null,
-      emergency_contact: emergencyContact || null,
-      emergency_phone: emergencyPhone || null,
-      
-      // Schedule and courses (JSON fields)
-      preferred_time_slots: JSON.stringify(preferredTimeSlots || []),
-      unavailable_time_slots: JSON.stringify(unavailableTimeSlots || []),
-      selected_courses: JSON.stringify(selectedCourses || []),
-      
-      // Test scores and admin fields (empty for now - will be updated by admin)
-      cefr_level: null,
-      grammar_score: null,
-      speaking_score: null,
-      listening_score: null,
-      reading_score: null,
-      writing_score: null,
-      admin_contact: null,
-      
-      // Registration status
-      registration_status: 'ยังไม่สอบ',
-      
-      // Teacher preference
-      preferred_teacher_type: teacherType || 'any',
-      
-      // Learning preferences (for compatibility)
-      learning_preferences: JSON.stringify({
-        preferredLanguage: preferredLanguage,
-        languageLevel: languageLevel,
-        learningStyle: learningStyle,
-        teacherType: teacherType
-      })
-    });
+    const [studentResult] = await connection.execute(
+      `INSERT INTO students (
+        user_id, first_name, last_name, first_name_en, last_name_en, nickname,
+        date_of_birth, gender, age, age_group, address, citizen_id,
+        current_education, preferred_language, language_level, recent_cefr,
+        learning_style, learning_goals, parent_name, parent_phone,
+        emergency_contact, emergency_phone, preferred_time_slots,
+        unavailable_time_slots, selected_courses, cefr_level,
+        grammar_score, speaking_score, listening_score, reading_score,
+        writing_score, admin_contact, registration_status, preferred_teacher_type,
+        learning_preferences, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        userId,
+        firstName,
+        lastName,
+        firstNameEn || null,
+        lastNameEn || null,
+        nickName || null,
+        dateOfBirth,
+        gender || null,
+        age,
+        ageGroup,
+        address || null,
+        encryptedCitizenId,
+        currentEducation || null,
+        preferredLanguage || null,
+        languageLevel || null,
+        recentCEFR || null,
+        learningStyle || null,
+        learningGoals || null,
+        parentName || null,
+        parentPhone || null,
+        emergencyContact || null,
+        emergencyPhone || null,
+        JSON.stringify(preferredTimeSlots || []),
+        JSON.stringify(unavailableTimeSlots || []),
+        JSON.stringify(selectedCourses || []),
+        null, // cefr_level
+        null, // grammar_score
+        null, // speaking_score
+        null, // listening_score
+        null, // reading_score
+        null, // writing_score
+        null, // admin_contact
+        'pending_exam', // registration_status - changed from 'ยังไม่สอบ' to 'pending_exam'
+        teacherType || 'any',
+        JSON.stringify({
+          preferredLanguage: preferredLanguage,
+          languageLevel: languageLevel,
+          learningStyle: learningStyle,
+          teacherType: teacherType
+        })
+      ]
+    );
 
-    return { userId, studentId };
+    return { userId, studentId: studentResult.insertId };
   });
 
   // Get complete student data
-  const student = await db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .join('branches', 'users.branch_id', 'branches.id')
-    .select(
-      'students.*',
-      'users.username',
-      'users.email',
-      'users.phone',
-      'users.line_id',
-      'branches.name as branch_name',
-      'branches.code as branch_code'
-    )
-    .where('students.id', result.studentId)
-    .first();
+  const [studentRows] = await db.execute(
+    `SELECT 
+      s.*,
+      u.username,
+      u.email,
+      u.phone,
+      u.line_id,
+      b.name as branch_name,
+      b.code as branch_code
+    FROM students s
+    JOIN users u ON s.user_id = u.id
+    JOIN branches b ON u.branch_id = b.id
+    WHERE s.id = ?`,
+    [result.studentId]
+  );
+
+  if (studentRows.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: 'Student not found after creation'
+    });
+  }
+
+  const student = studentRows[0];
 
   // Parse JSON fields safely
   student.preferred_time_slots = safeJsonParse(student.preferred_time_slots);
@@ -198,7 +219,7 @@ const registerStudent = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: 'Student registered successfully. Status: ยังไม่สอบ (Waiting for test)',
+    message: 'Student registered successfully. Status: pending_exam (Waiting for test)',
     data: { 
       student,
       note: 'Username is phone number, password is citizen ID. Admin will update test scores later.'
@@ -213,78 +234,81 @@ const getStudents = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, search, branch_id, status } = req.query;
   const offset = (page - 1) * limit;
 
-  let query = db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .join('branches', 'users.branch_id', 'branches.id')
-    .select(
-      'students.id',
-      'students.first_name',
-      'students.last_name',
-      'students.nickname',
-      'students.age',
-      'students.grade_level',
-      'students.cefr_level',
-      'users.username',
-      'users.email',
-      'users.phone',
-      'users.line_id',
-      'users.status',
-      'branches.name as branch_name',
-      'branches.code as branch_code',
-      'students.created_at'
-    );
+  // Build base query
+  let whereClause = '';
+  let params = [];
+  let conditions = [];
 
-  // Apply filters
+  // Apply search filter
   if (search) {
-    query = query.where(function() {
-      this.where('students.first_name', 'like', `%${search}%`)
-        .orWhere('students.last_name', 'like', `%${search}%`)
-        .orWhere('students.nickname', 'like', `%${search}%`)
-        .orWhere('users.username', 'like', `%${search}%`);
-    });
+    conditions.push(`(
+      s.first_name LIKE ? OR 
+      s.last_name LIKE ? OR 
+      s.nickname LIKE ? OR 
+      u.username LIKE ?
+    )`);
+    const searchPattern = `%${search}%`;
+    params.push(searchPattern, searchPattern, searchPattern, searchPattern);
   }
 
+  // Apply status filter
+  if (status) {
+    conditions.push('u.status = ?');
+    params.push(status);
+  }
+
+  // Apply branch filter (commented out as per original code)
   // if (branch_id && req.user.role !== 'owner') {
-  //   query = query.where('users.branch_id', branch_id);
+  //   conditions.push('u.branch_id = ?');
+  //   params.push(branch_id);
   // } else if (req.user.role !== 'owner') {
-  //   // Non-owners can only see their branch students
-  //   query = query.where('users.branch_id', req.user.branch_id);
+  //   conditions.push('u.branch_id = ?');
+  //   params.push(req.user.branch_id);
   // }
 
-  if (status) {
-    query = query.where('users.status', status);
+  if (conditions.length > 0) {
+    whereClause = 'WHERE ' + conditions.join(' AND ');
   }
 
-  const students = await query
-    .orderBy('students.created_at', 'desc')
-    .limit(limit)
-    .offset(offset);
+  // Get students with pagination
+  const query = `
+    SELECT 
+      s.id,
+      s.first_name,
+      s.last_name,
+      s.nickname,
+      s.age,
+      s.grade_level,
+      s.cefr_level,
+      s.registration_status,
+      u.username,
+      u.email,
+      u.phone,
+      u.line_id,
+      u.status,
+      b.name as branch_name,
+      b.code as branch_code,
+      s.created_at
+    FROM students s
+    JOIN users u ON s.user_id = u.id
+    JOIN branches b ON u.branch_id = b.id
+    ${whereClause}
+    ORDER BY s.created_at DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  const [students] = await db.execute(query, [...params, parseInt(limit), parseInt(offset)]);
 
   // Get total count for pagination
-  const totalQuery = db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .count('* as total');
+  const countQuery = `
+    SELECT COUNT(*) as total
+    FROM students s
+    JOIN users u ON s.user_id = u.id
+    ${whereClause}
+  `;
 
-  if (search) {
-    totalQuery.where(function() {
-      this.where('students.first_name', 'like', `%${search}%`)
-        .orWhere('students.last_name', 'like', `%${search}%`)
-        .orWhere('students.nickname', 'like', `%${search}%`)
-        .orWhere('users.username', 'like', `%${search}%`);
-    });
-  }
-
-  // if (branch_id && req.user.role !== 'owner') {
-  //   totalQuery.where('users.branch_id', branch_id);
-  // } else if (req.user.role !== 'owner') {
-  //   totalQuery.where('users.branch_id', req.user.branch_id);
-  // }
-
-  if (status) {
-    totalQuery.where('users.status', status);
-  }
-
-  const [{ total }] = await totalQuery;
+  const [countResult] = await db.execute(countQuery, params);
+  const total = countResult[0].total;
 
   res.json({
     success: true,
@@ -306,30 +330,38 @@ const getStudents = asyncHandler(async (req, res) => {
 const getStudent = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  let query = db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .join('branches', 'users.branch_id', 'branches.id')
-    .select(
-      'students.*',
-      'users.username',
-      'users.email',
-      'users.phone',
-      'users.line_id',
-      'users.status',
-      'branches.name as branch_name',
-      'branches.code as branch_code'
-    )
-    .where('students.id', id);
+  // Build query with optional branch filter
+  let query = `
+    SELECT 
+      s.*,
+      u.username,
+      u.email,
+      u.phone,
+      u.line_id,
+      u.status,
+      b.name as branch_name,
+      b.code as branch_code
+    FROM students s
+    JOIN users u ON s.user_id = u.id
+    JOIN branches b ON u.branch_id = b.id
+    WHERE s.id = ?
+  `;
 
-  if (req.user.role !== 'owner') {
-    query = query.where('users.branch_id', req.user.branch_id);
-  }
+  let params = [id];
 
-  const student = await query.first();
+  // Add branch filter for non-owners (commented as in original)
+  // if (req.user.role !== 'owner') {
+  //   query += ' AND u.branch_id = ?';
+  //   params.push(req.user.branch_id);
+  // }
 
-  if (!student) {
+  const [students] = await db.execute(query, params);
+
+  if (students.length === 0) {
     return res.status(404).json({ success: false, message: 'Student not found' });
   }
+
+  const student = students[0];
 
   // ✅ parse แบบปลอดภัย (ไม่พังถ้าไม่ใช่ JSON)
   student.learning_preferences = safeJsonParse(student.learning_preferences);
@@ -351,18 +383,22 @@ const updateStudent = asyncHandler(async (req, res) => {
   const updateData = req.body;
 
   // Get current student to check permissions
-  const student = await db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .select('students.*', 'users.branch_id')
-    .where('students.id', id)
-    .first();
+  const [studentRows] = await db.execute(
+    `SELECT s.*, u.branch_id 
+     FROM students s 
+     JOIN users u ON s.user_id = u.id 
+     WHERE s.id = ?`,
+    [id]
+  );
 
-  if (!student) {
+  if (studentRows.length === 0) {
     return res.status(404).json({
       success: false,
       message: 'Student not found'
     });
   }
+
+  const student = studentRows[0];
 
   // Check permissions
   if (req.user.role === 'student' && student.user_id !== req.user.id) {
@@ -391,6 +427,9 @@ const updateStudent = asyncHandler(async (req, res) => {
   ];
 
   const studentUpdateData = {};
+  const updateFields = [];
+  const updateValues = [];
+
   for (const field of allowedFields) {
     if (updateData[field] !== undefined) {
       if (['learning_preferences', 'preferred_time_slots', 'unavailable_time_slots', 'selected_courses'].includes(field) 
@@ -399,6 +438,8 @@ const updateStudent = asyncHandler(async (req, res) => {
       } else {
         studentUpdateData[field] = updateData[field];
       }
+      updateFields.push(`${field} = ?`);
+      updateValues.push(studentUpdateData[field]);
     }
   }
 
@@ -406,32 +447,40 @@ const updateStudent = asyncHandler(async (req, res) => {
   const jsonFields = ['preferred_time_slots', 'unavailable_time_slots', 'selected_courses'];
   for (const field of jsonFields) {
     if (updateData[field] !== undefined) {
-      studentUpdateData[field] = JSON.stringify(updateData[field]);
+      if (!updateFields.find(f => f.startsWith(field))) {
+        updateFields.push(`${field} = ?`);
+        updateValues.push(JSON.stringify(updateData[field]));
+      }
     }
   }
 
-  if (Object.keys(studentUpdateData).length > 0) {
-    await db('students')
-      .where('id', id)
-      .update(studentUpdateData);
+  if (updateFields.length > 0) {
+    updateFields.push('updated_at = NOW()');
+    updateValues.push(id);
+    
+    const updateQuery = `UPDATE students SET ${updateFields.join(', ')} WHERE id = ?`;
+    await db.execute(updateQuery, updateValues);
   }
 
   // Get updated student data
-  const updatedStudent = await db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .join('branches', 'users.branch_id', 'branches.id')
-    .select(
-      'students.*',
-      'users.username',
-      'users.email',
-      'users.phone',
-      'users.line_id',
-      'users.status',
-      'branches.name as branch_name',
-      'branches.code as branch_code'
-    )
-    .where('students.id', id)
-    .first();
+  const [updatedStudentRows] = await db.execute(
+    `SELECT 
+      s.*,
+      u.username,
+      u.email,
+      u.phone,
+      u.line_id,
+      u.status,
+      b.name as branch_name,
+      b.code as branch_code
+    FROM students s
+    JOIN users u ON s.user_id = u.id
+    JOIN branches b ON u.branch_id = b.id
+    WHERE s.id = ?`,
+    [id]
+  );
+
+  const updatedStudent = updatedStudentRows[0];
 
   if (updatedStudent.learning_preferences) {
     updatedStudent.learning_preferences = JSON.parse(updatedStudent.learning_preferences);
@@ -481,18 +530,22 @@ const updateStudentTestResults = asyncHandler(async (req, res) => {
   }
 
   // Get current student to check permissions
-  const student = await db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .select('students.*', 'users.branch_id')
-    .where('students.id', id)
-    .first();
+  const [studentRows] = await db.execute(
+    `SELECT s.*, u.branch_id 
+     FROM students s 
+     JOIN users u ON s.user_id = u.id 
+     WHERE s.id = ?`,
+    [id]
+  );
 
-  if (!student) {
+  if (studentRows.length === 0) {
     return res.status(404).json({
       success: false,
       message: 'Student not found'
     });
   }
+
+  const student = studentRows[0];
 
   // Check branch permissions (owners can access all branches)
   if (req.user.role !== 'owner' && student.branch_id !== req.user.branch_id) {
@@ -502,46 +555,69 @@ const updateStudentTestResults = asyncHandler(async (req, res) => {
     });
   }
 
+  // Prepare update data
+  const updateFields = [];
+  const updateValues = [];
+
+  if (cefr_level !== undefined) {
+    updateFields.push('cefr_level = ?');
+    updateValues.push(cefr_level);
+  }
+  if (grammar_score !== undefined) {
+    updateFields.push('grammar_score = ?');
+    updateValues.push(grammar_score);
+  }
+  if (speaking_score !== undefined) {
+    updateFields.push('speaking_score = ?');
+    updateValues.push(speaking_score);
+  }
+  if (listening_score !== undefined) {
+    updateFields.push('listening_score = ?');
+    updateValues.push(listening_score);
+  }
+  if (reading_score !== undefined) {
+    updateFields.push('reading_score = ?');
+    updateValues.push(reading_score);
+  }
+  if (writing_score !== undefined) {
+    updateFields.push('writing_score = ?');
+    updateValues.push(writing_score);
+  }
+
+  // Always update admin contact and status
+  updateFields.push('admin_contact = ?');
+  updateValues.push(admin_contact || req.user.username);
+  
+  updateFields.push('registration_status = ?');
+  updateValues.push('follow_up'); // Change status to "follow_up"
+  
+  updateFields.push('updated_at = NOW()');
+
+  updateValues.push(id);
+
   // Update test results and change status
-  const updateData = {
-    cefr_level,
-    grammar_score,
-    speaking_score,
-    listening_score,
-    reading_score,
-    writing_score,
-    admin_contact: admin_contact || req.user.username,
-    registration_status: 'รอติดตาม', // Change status to "waiting for follow-up"
-    last_status_update: new Date()
-  };
-
-  // Remove undefined fields
-  Object.keys(updateData).forEach(key => {
-    if (updateData[key] === undefined) {
-      delete updateData[key];
-    }
-  });
-
-  await db('students')
-    .where('id', id)
-    .update(updateData);
+  const updateQuery = `UPDATE students SET ${updateFields.join(', ')} WHERE id = ?`;
+  await db.execute(updateQuery, updateValues);
 
   // Get updated student data
-  const updatedStudent = await db('students')
-    .join('users', 'students.user_id', 'users.id')
-    .join('branches', 'users.branch_id', 'branches.id')
-    .select(
-      'students.*',
-      'users.username',
-      'users.email',
-      'users.phone',
-      'users.line_id',
-      'users.status',
-      'branches.name as branch_name',
-      'branches.code as branch_code'
-    )
-    .where('students.id', id)
-    .first();
+  const [updatedStudentRows] = await db.execute(
+    `SELECT 
+      s.*,
+      u.username,
+      u.email,
+      u.phone,
+      u.line_id,
+      u.status,
+      b.name as branch_name,
+      b.code as branch_code
+    FROM students s
+    JOIN users u ON s.user_id = u.id
+    JOIN branches b ON u.branch_id = b.id
+    WHERE s.id = ?`,
+    [id]
+  );
+
+  const updatedStudent = updatedStudentRows[0];
 
   // Parse JSON fields safely
   updatedStudent.preferred_time_slots = safeJsonParse(updatedStudent.preferred_time_slots);
@@ -554,7 +630,7 @@ const updateStudentTestResults = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Test results updated successfully. Status changed to รอติดตาม',
+    message: 'Test results updated successfully. Status changed to follow_up',
     data: { student: updatedStudent }
   });
 });
