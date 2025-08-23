@@ -16,12 +16,6 @@ module.exports = {
       min: 2,
       max: 10,
     },
-    migrations: {
-      directory: './src/database/migrations',
-    },
-    seeds: {
-      directory: './src/database/seeds',
-    },
   },
   production: {
     client: process.env.DB_CLIENT || 'mysql2',
@@ -37,12 +31,6 @@ module.exports = {
     pool: {
       min: 2,
       max: 10,
-    },
-    migrations: {
-      directory: './src/database/migrations',
-    },
-    seeds: {
-      directory: './src/database/seeds',
     },
   },
 };
