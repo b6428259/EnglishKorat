@@ -1077,3 +1077,4 @@
 {"level":"info","message":"::1 - - [23/Aug/2025:19:12:04 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 285 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 19:12:04"}
 {"level":"error","message":"500 - transaction is not a function - /api/v1/students/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-23 19:16:04"}
 {"level":"error","message":"500 - getaddrinfo ENOTFOUND ekorat-db.c96wcau48ea0.ap-southeast-1.rds.amazonaws.com - /api/v1/students/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-23 19:18:33"}
+{"level":"error","message":"500 - getaddrinfo ENOTFOUND ekorat-db.c96wcau48ea0.ap-southeast-1.rds.amazonaws.com - /api/v1/students/register - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-23 19:21:52"}
