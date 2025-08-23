@@ -6,7 +6,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const { ping } = require('./config/database');  // << require after .env
+const { ping } = require('./config/database');  // Keep for backward compatibility
+const { directDB } = require('./config/directDatabase');  // New direct database
 const apiRoutes = require('./routes');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 const logger = require('./utils/logger');
@@ -45,7 +46,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/health', async (req, res) => {
-  const dbOk = await ping();
+  const dbOk = await directDB.ping();
   let redisOk = false;
   let redisError = null;
   try {

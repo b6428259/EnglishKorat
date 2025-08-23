@@ -1067,3 +1067,20 @@
 {"level":"error","message":"404 - Not found - /api/v1/nonexistent-endpoint - /api/v1/nonexistent-endpoint - GET - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
 {"level":"error","message":"400 - Unexpected token 'i', \"invalid json data\" is not valid JSON - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
 {"level":"error","message":"500 - db is not a function - /api/v1/auth/login - POST - ::ffff:127.0.0.1","service":"english-korat-api","timestamp":"2025-08-18 00:10:21"}
+{"level":"info","message":"✅ Database connection established","service":"english-korat-api","timestamp":"2025-08-23 17:35:13"}
+{"level":"info","message":"🚀 Server running on port 3000","service":"english-korat-api","timestamp":"2025-08-23 17:35:13"}
+{"level":"info","message":"📚 English Korat School API - Environment: development","service":"english-korat-api","timestamp":"2025-08-23 17:35:13"}
+{"level":"error","message":"500 - SQLITE_CONSTRAINT: CHECK constraint failed: registration_status - /api/v1/students/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 17:35:39"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:35:39 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:35:39"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:36:23 +0000] \"POST /api/v1/students/register HTTP/1.1\" 400 60 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:36:23"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:36:32 +0000] \"POST /api/v1/students/register HTTP/1.1\" 400 60 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:36:32"}
+{"level":"error","message":"500 - SQLITE_CONSTRAINT: CHECK constraint failed: registration_status - /api/v1/students/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 17:36:49"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:36:49 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:36:49"}
+{"level":"error","message":"500 - SQLITE_CONSTRAINT: CHECK constraint failed: registration_status - /api/v1/students/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 17:37:32"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:37:32 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:37:32"}
+{"level":"error","message":"500 - SQLITE_CONSTRAINT: CHECK constraint failed: registration_status - /api/v1/students/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 17:38:00"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:38:00 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:38:00"}
+{"level":"error","message":"500 - SQLITE_CONSTRAINT: CHECK constraint failed: registration_status - /api/v1/students/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 17:38:55"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:38:55 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:38:55"}
+{"level":"error","message":"500 - SQLITE_CONSTRAINT: CHECK constraint failed: registration_status - /api/v1/students/register - POST - ::1","service":"english-korat-api","timestamp":"2025-08-23 17:39:47"}
+{"level":"info","message":"::1 - - [23/Aug/2025:17:39:47 +0000] \"POST /api/v1/students/register HTTP/1.1\" 500 1713 \"-\" \"curl/8.5.0\"","service":"english-korat-api","timestamp":"2025-08-23 17:39:47"}
