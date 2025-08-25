@@ -1,44 +1,102 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getTeacherSchedule,
-  getStudentSchedule,
-  getRoomSchedule,
-  checkSchedulingConflicts,
-  getAvailableTimeSlots,
-  getBranchSchedule
+  // New schedule system functions
+  createSchedule,
+  getSchedules,
+  getSchedule,
+  updateSchedule,
+  deleteSchedule,
+  assignStudentToSchedule,
+  removeStudentFromSchedule,
+  getScheduleStudents,
+  createScheduleException,
+  createMakeupSession,
+  getMakeupSessions,
+  handleStudentLeave,
+  handleCourseDrop,
+  getScheduleSessions,
+  getWeeklySchedule,
 } = require('../controllers/scheduleController');
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const { validateConflictCheck } = require('../middleware/validationMiddleware');
 
-// @route   GET /api/v1/schedules/teacher/:teacherId
-// @desc    Get schedule for a teacher
-// @access  Private
-router.get('/teacher/:teacherId', authMiddleware, getTeacherSchedule);
+// ============ NEW SCHEDULE SYSTEM ROUTES ============
 
-// @route   GET /api/v1/schedules/student/:studentId
-// @desc    Get schedule for a student
-// @access  Private
-router.get('/student/:studentId', authMiddleware, getStudentSchedule);
-
-// @route   GET /api/v1/schedules/room/:roomId
-// @desc    Get room schedule
-// @access  Private
-router.get('/room/:roomId', authMiddleware, getRoomSchedule);
-
-// @route   GET /api/v1/schedules/branch/:branchId
-// @desc    Get branch schedule overview
+// @route   POST /api/v1/schedules
+// @desc    Create new schedule
 // @access  Private (Admin, Owner)
-router.get('/branch/:branchId', authMiddleware, authorize('admin', 'owner'), getBranchSchedule);
+router.post('/', authMiddleware, authorize('admin', 'owner'), createSchedule);
 
-// @route   POST /api/v1/schedules/check-conflicts
-// @desc    Check for scheduling conflicts
-// @access  Private (Admin, Owner)
-router.post('/check-conflicts', authMiddleware, authorize('admin', 'owner'), validateConflictCheck, checkSchedulingConflicts);
+// @route   GET /api/v1/schedules
+// @desc    Get schedules with filtering
+// @access  Private
+router.get('/', authMiddleware, getSchedules);
 
-// @route   GET /api/v1/schedules/available-slots
-// @desc    Get available time slots
+// @route   GET /api/v1/schedules/weekly
+// @desc    Get weekly schedule view
+// @access  Private
+router.get('/weekly', authMiddleware, getWeeklySchedule);
+
+// @route   GET /api/v1/schedules/:id
+// @desc    Get single schedule
+// @access  Private
+router.get('/:id', authMiddleware, getSchedule);
+
+// @route   PUT /api/v1/schedules/:id
+// @desc    Update schedule
 // @access  Private (Admin, Owner)
-router.get('/available-slots', authMiddleware, authorize('admin', 'owner'), getAvailableTimeSlots);
+router.put('/:id', authMiddleware, authorize('admin', 'owner'), updateSchedule);
+
+// @route   DELETE /api/v1/schedules/:id
+// @desc    Delete schedule
+// @access  Private (Admin, Owner)
+router.delete('/:id', authMiddleware, authorize('admin', 'owner'), deleteSchedule);
+
+// @route   POST /api/v1/schedules/:id/students
+// @desc    Assign student to schedule
+// @access  Private (Admin, Owner)
+router.post('/:id/students', authMiddleware, authorize('admin', 'owner'), assignStudentToSchedule);
+
+// @route   DELETE /api/v1/schedules/:id/students/:studentId
+// @desc    Remove student from schedule
+// @access  Private (Admin, Owner)
+router.delete('/:id/students/:studentId', authMiddleware, authorize('admin', 'owner'), removeStudentFromSchedule);
+
+// @route   GET /api/v1/schedules/:id/students
+// @desc    Get students in schedule
+// @access  Private
+router.get('/:id/students', authMiddleware, getScheduleStudents);
+
+// @route   POST /api/v1/schedules/:id/exceptions
+// @desc    Create schedule exception
+// @access  Private (Admin, Owner)
+router.post('/:id/exceptions', authMiddleware, authorize('admin', 'owner'), createScheduleException);
+
+// @route   GET /api/v1/schedules/:id/sessions
+// @desc    Get schedule sessions with exceptions
+// @access  Private
+router.get('/:id/sessions', authMiddleware, getScheduleSessions);
+
+// @route   POST /api/v1/schedules/:id/makeup
+// @desc    Create makeup session
+// @access  Private (Admin, Owner)
+router.post('/:id/makeup', authMiddleware, authorize('admin', 'owner'), createMakeupSession);
+
+// @route   GET /api/v1/schedules/:id/makeup
+// @desc    Get makeup sessions for schedule
+// @access  Private
+router.get('/:id/makeup', authMiddleware, getMakeupSessions);
+
+// @route   POST /api/v1/schedules/:id/leave
+// @desc    Handle student leave request
+// @access  Private (Admin, Owner)
+router.post('/:id/leave', authMiddleware, authorize('admin', 'owner'), handleStudentLeave);
+
+// @route   POST /api/v1/schedules/:id/drop
+// @desc    Handle course drop/pause
+// @access  Private (Admin, Owner)
+router.post('/:id/drop', authMiddleware, authorize('admin', 'owner'), handleCourseDrop);
+
 
 module.exports = router;
