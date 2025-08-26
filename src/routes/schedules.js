@@ -11,12 +11,20 @@ const {
   removeStudentFromSchedule,
   getScheduleStudents,
   createScheduleException,
+  createScheduleExceptionBySession,
   createMakeupSession,
   getMakeupSessions,
   handleStudentLeave,
   handleCourseDrop,
   getScheduleSessions,
   getWeeklySchedule,
+  getScheduleCalendar,
+  applyExistingExceptions,
+  addSessionComment,
+  getSessionComments,
+  updateSessionComment,
+  deleteSessionComment,
+  editSession,
 } = require('../controllers/scheduleController');
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const { validateConflictCheck } = require('../middleware/validationMiddleware');
@@ -37,6 +45,11 @@ router.get('/', authMiddleware, getSchedules);
 // @desc    Get weekly schedule view
 // @access  Private
 router.get('/weekly', authMiddleware, getWeeklySchedule);
+
+// @route   GET /api/v1/schedules/calendar
+// @desc    Get all schedules by day/week/month with holidays
+// @access  Private
+router.get('/calendar', authMiddleware, getScheduleCalendar);
 
 // @route   GET /api/v1/schedules/:id
 // @desc    Get single schedule
@@ -73,6 +86,11 @@ router.get('/:id/students', authMiddleware, getScheduleStudents);
 // @access  Private (Admin, Owner)
 router.post('/:id/exceptions', authMiddleware, authorize('admin', 'owner'), createScheduleException);
 
+// @route   POST /api/v1/schedules/:id/exceptions/session
+// @desc    Create schedule exception by session ID
+// @access  Private (Admin, Owner)
+router.post('/:id/exceptions/session', authMiddleware, authorize('admin', 'owner'), createScheduleExceptionBySession);
+
 // @route   GET /api/v1/schedules/:id/sessions
 // @desc    Get schedule sessions with exceptions
 // @access  Private
@@ -97,6 +115,38 @@ router.post('/:id/leave', authMiddleware, authorize('admin', 'owner'), handleStu
 // @desc    Handle course drop/pause
 // @access  Private (Admin, Owner)
 router.post('/:id/drop', authMiddleware, authorize('admin', 'owner'), handleCourseDrop);
+
+// @route   POST /api/v1/schedules/:id/apply-exceptions
+// @desc    Apply existing exceptions to sessions
+// @access  Private (Admin, Owner)
+router.post('/:id/apply-exceptions', authMiddleware, authorize('admin', 'owner'), applyExistingExceptions);
+
+// ============ SESSION MANAGEMENT ROUTES ============
+
+// @route   PUT /api/v1/schedules/:id/sessions/:sessionId
+// @desc    Edit session details
+// @access  Private (Admin, Owner)
+router.put('/:id/sessions/:sessionId', authMiddleware, authorize('admin', 'owner'), editSession);
+
+// @route   POST /api/v1/schedules/:id/sessions/:sessionId/comments
+// @desc    Add comment/note to session
+// @access  Private (Admin, Owner)
+router.post('/:id/sessions/:sessionId/comments', authMiddleware, authorize('admin', 'owner'), addSessionComment);
+
+// @route   GET /api/v1/schedules/:id/sessions/:sessionId/comments
+// @desc    Get session comments
+// @access  Private
+router.get('/:id/sessions/:sessionId/comments', authMiddleware, getSessionComments);
+
+// @route   PUT /api/v1/schedules/:id/sessions/:sessionId/comments/:commentId
+// @desc    Update session comment
+// @access  Private (Admin, Owner, Comment Author)
+router.put('/:id/sessions/:sessionId/comments/:commentId', authMiddleware, updateSessionComment);
+
+// @route   DELETE /api/v1/schedules/:id/sessions/:sessionId/comments/:commentId
+// @desc    Delete session comment
+// @access  Private (Admin, Owner, Comment Author)
+router.delete('/:id/sessions/:sessionId/comments/:commentId', authMiddleware, deleteSessionComment);
 
 
 module.exports = router;

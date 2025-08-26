@@ -29,8 +29,8 @@ class Course extends BaseModel {
     try {
       const course = await this.knex(this.tableName)
         .select(
-          'courses.*', 
-          'course_categories.name as category_name', 
+          'courses.*',
+          'course_categories.name as category_name',
           'course_categories.code as category_code',
           'course_durations.name as duration_name',
           'course_durations.hours as duration_hours',
@@ -48,11 +48,11 @@ class Course extends BaseModel {
       // Get pricing options if using dynamic pricing
       if (course.uses_dynamic_pricing && course.category_id && course.duration_id) {
         course.pricingOptions = await PricingCalculationService.getAvailablePricingOptions(
-          course.category_id, 
+          course.category_id,
           course.duration_id
         );
         course.pricingSummary = await PricingCalculationService.getCoursePricingSummary(
-          course.category_id, 
+          course.category_id,
           course.duration_id
         );
       }
@@ -207,12 +207,12 @@ class Course extends BaseModel {
         for (const group of groups) {
           try {
             group.currentPricing = await this.calculatePricingForGroupSize(
-              courseId, 
+              courseId,
               group.current_students || 1
             );
             if (group.target_students && group.target_students !== group.current_students) {
               group.targetPricing = await this.calculatePricingForGroupSize(
-                courseId, 
+                courseId,
                 group.target_students
               );
             }
@@ -311,13 +311,14 @@ class Course extends BaseModel {
     try {
       let query = this.knex(this.tableName)
         .select(
-          'courses.*', 
-          'course_categories.name as category_name', 
-          'course_categories.name_en as category_name_en', 
+          'courses.*',
+          'course_categories.name as category_name',
+          'course_categories.name_en as category_name_en',
           'course_categories.code as category_code',
           'course_durations.name as duration_name',
           'course_durations.hours as duration_hours',
-          'branches.name as branch_name'
+          'branches.name_en as branch_name_en',
+          'branches.name_th as branch_name_th',
         )
         .leftJoin('course_categories', 'courses.category_id', 'course_categories.id')
         .leftJoin('course_durations', 'courses.duration_id', 'course_durations.id')
@@ -373,11 +374,11 @@ class Course extends BaseModel {
       } else {
         query = query.orderBy('courses.name', 'asc');
       }
-      
+
       if (options.limit) {
         query = query.limit(options.limit);
       }
-      
+
       if (options.offset) {
         query = query.offset(options.offset);
       }
@@ -390,7 +391,7 @@ class Course extends BaseModel {
           if (course.uses_dynamic_pricing && course.category_id && course.duration_id) {
             try {
               course.pricingOptions = await PricingCalculationService.getAvailablePricingOptions(
-                course.category_id, 
+                course.category_id,
                 course.duration_id
               );
             } catch (pricingError) {
@@ -429,7 +430,7 @@ class Course extends BaseModel {
 
       // Filter based on student's preferred teacher type if specified
       if (student.preferred_teacher_type && student.preferred_teacher_type !== 'any') {
-        query = query.whereExists(function() {
+        query = query.whereExists(function () {
           this.select('*')
             .from('course_groups')
             .leftJoin('teachers', 'course_groups.teacher_id', 'teachers.id')

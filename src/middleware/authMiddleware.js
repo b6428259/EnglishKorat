@@ -5,52 +5,53 @@ const { isTokenBlacklisted } = require('../controllers/authController');
 const authMiddleware = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Access denied. No token provided.' 
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
       });
     }
 
     // Check if token is blacklisted
     const isBlacklisted = await isTokenBlacklisted(token);
     if (isBlacklisted) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Token has been revoked. Please login again.' 
+      return res.status(401).json({
+        success: false,
+        message: 'Token has been revoked. Please login again.'
       });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Get user with role information
     const user = await db('users')
-      .select('users.*', 'branches.name as branch_name', 'branches.code as branch_code')
+      .select('users.*', 'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th', 'branches.code as branch_code')
       .leftJoin('branches', 'users.branch_id', 'branches.id')
       .where('users.id', decoded.userId)
       .first();
 
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Token is not valid.' 
+      return res.status(401).json({
+        success: false,
+        message: 'Token is not valid.'
       });
     }
 
     if (user.status !== 'active') {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Account is not active.' 
+      return res.status(401).json({
+        success: false,
+        message: 'Account is not active.'
       });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ 
-      success: false, 
-      message: 'Token is not valid.' 
+    res.status(401).json({
+      success: false,
+      message: 'Token is not valid.'
     });
   }
 };
@@ -59,16 +60,16 @@ const authMiddleware = async (req, res, next) => {
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Access denied. Authentication required.' 
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. Authentication required.'
       });
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Access denied. Insufficient permissions.' 
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Insufficient permissions.'
       });
     }
 
@@ -79,9 +80,9 @@ const authorize = (...roles) => {
 // Branch access control - users can only access their branch data (except owners)
 const branchAccess = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ 
-      success: false, 
-      message: 'Access denied. Authentication required.' 
+    return res.status(401).json({
+      success: false,
+      message: 'Access denied. Authentication required.'
     });
   }
 
@@ -92,9 +93,9 @@ const branchAccess = (req, res, next) => {
 
   // Add branch filter to query if branch_id is in the request
   if (req.body.branch_id && req.body.branch_id !== req.user.branch_id) {
-    return res.status(403).json({ 
-      success: false, 
-      message: 'Access denied. Cannot access other branch data.' 
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Cannot access other branch data.'
     });
   }
 

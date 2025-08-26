@@ -111,7 +111,7 @@ const login = asyncHandler(async (req, res) => {
 
   // Get user with password
   const user = await db('users')
-    .select('users.*', 'branches.name as branch_name', 'branches.code as branch_code')
+    .select('users.*', 'branches.name_en as branch_name_en', 'branches.name_th as branch_name_th', 'branches.code as branch_code')
     .leftJoin('branches', 'users.branch_id', 'branches.id')
     .where('users.username', username)
     .first();
@@ -161,7 +161,7 @@ const login = asyncHandler(async (req, res) => {
 // @access  Private
 const getProfile = asyncHandler(async (req, res) => {
   const user = await db('users')
-    .select('users.*', 'branches.name as branch_name', 'branches.code as branch_code')
+    .select('users.*', 'branches.name_en as branch_name_en', 'branches.name_th as branch_name_th', 'branches.code as branch_code')
     .leftJoin('branches', 'users.branch_id', 'branches.id')
     .where('users.id', req.user.id)
     .first();
@@ -219,7 +219,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     .update(updateData);
 
   const user = await db('users')
-    .select('users.*', 'branches.name as branch_name', 'branches.code as branch_code')
+    .select('users.*', 'branches.name_en as branch_name_en', 'branches.name_th as branch_name_th', 'branches.code as branch_code')
     .leftJoin('branches', 'users.branch_id', 'branches.id')
     .where('users.id', userId)
     .first();
@@ -274,7 +274,7 @@ const updateProfileById = asyncHandler(async (req, res) => {
     .update(updateData);
 
   const user = await db('users')
-    .select('users.*', 'branches.name as branch_name', 'branches.code as branch_code')
+    .select('users.*', 'branches.name_en as branch_name_en', 'branches.name_th as branch_name_th', 'branches.code as branch_code')
     .leftJoin('branches', 'users.branch_id', 'branches.id')
     .where('users.id', userId)
     .first();

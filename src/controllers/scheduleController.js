@@ -30,7 +30,8 @@ const createSchedule = asyncHandler(async (req, res) => {
   // Check if course exists and user has access
   const course = await db('courses')
     .join('branches', 'courses.branch_id', 'branches.id')
-    .select('courses.*', 'branches.name as branch_name')
+    .select('courses.*', 'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',)
     .where('courses.id', course_id)
     .first();
 
@@ -94,7 +95,7 @@ const createSchedule = asyncHandler(async (req, res) => {
           slot_order: i + 1
         });
       }
-      
+
       await trx('schedule_time_slots').insert(timeSlotInserts);
 
       // 3. Get inserted time slots
@@ -124,7 +125,7 @@ const createSchedule = asyncHandler(async (req, res) => {
     res.status(201).json({
       success: true,
       message: `Schedule created successfully with ${totalSessions} sessions generated across ${estimatedWeeks} weeks`,
-      data: { 
+      data: {
         schedule,
         sessions_generated: totalSessions,
         estimated_weeks: estimatedWeeks,
@@ -157,11 +158,11 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
   let sessionNumber = 1;
   let weekNumber = 1;
   let currentWeekStart = new Date(startDate);
-  
+
   // Find the Monday of the week containing start_date
   const daysSinceMonday = (currentWeekStart.getDay() + 6) % 7;
   currentWeekStart.setDate(currentWeekStart.getDate() - daysSinceMonday);
-  
+
   const dayNumbers = {
     'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
     'thursday': 4, 'friday': 5, 'saturday': 6
@@ -177,13 +178,13 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
       sessionDate.setDate(sessionDate.getDate() + targetDay);
 
       const dateStr = sessionDate.toISOString().split('T')[0];
-      
+
       // Check if it's a holiday
       const isHoliday = holidays.some(h => h.date === dateStr);
-      
+
       let status = 'scheduled';
       let notes = null;
-      
+
       if (isHoliday) {
         const holiday = holidays.find(h => h.date === dateStr);
         if (autoRescheduleHolidays) {
@@ -212,7 +213,7 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
 
       sessionNumber++;
     }
-    
+
     weekNumber++;
     currentWeekStart.setDate(currentWeekStart.getDate() + 7);
   }
@@ -220,11 +221,11 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
   // Add makeup sessions for cancelled holidays
   if (autoRescheduleHolidays) {
     const cancelledSessions = sessions.filter(s => s.status === 'cancelled');
-    
+
     for (const cancelled of cancelledSessions) {
       const timeSlot = timeSlots.find(ts => ts.id === cancelled.time_slot_id);
       const targetDay = dayNumbers[timeSlot.day_of_week];
-      
+
       // Schedule makeup session 1 week after course ends
       let makeupDate = new Date(currentWeekStart);
       makeupDate.setDate(makeupDate.getDate() + targetDay);
@@ -243,7 +244,7 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
         is_makeup_session: true,
         notes: `Makeup session for ${cancelled.notes}`
       });
-      
+
       weekNumber++;
     }
   }
@@ -252,7 +253,7 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
 };
 
 // Helper function to get holidays
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // ดึงวันหยุดจาก myhora.com ตามปี พ.ศ. ที่ส่งมา
 const getHolidays = async (years) => {
@@ -308,7 +309,8 @@ const getSchedules = asyncHandler(async (req, res) => {
       'teachers.first_name as teacher_first_name',
       'teachers.last_name as teacher_last_name',
       'rooms.room_name',
-      'branches.name as branch_name'
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
     );
 
   // Apply filters
@@ -333,7 +335,7 @@ const getSchedules = asyncHandler(async (req, res) => {
   // Get student counts for each schedule
   const scheduleIds = schedules.map(s => s.id);
   let studentCounts = {};
-  
+
   if (scheduleIds.length > 0) {
     const counts = await db('schedule_students')
       .select('schedule_id')
@@ -447,7 +449,7 @@ const updateSchedule = asyncHandler(async (req, res) => {
       end_time || currentSchedule.end_time,
       id
     );
-    
+
     if (conflicts.length > 0) {
       return res.status(409).json({
         success: false,
@@ -459,7 +461,7 @@ const updateSchedule = asyncHandler(async (req, res) => {
 
   // Prepare update data
   const allowedFields = [
-    'teacher_id', 'room_id', 'schedule_name', 'day_of_week', 
+    'teacher_id', 'room_id', 'schedule_name', 'day_of_week',
     'start_time', 'end_time', 'duration_hours', 'max_students',
     'schedule_type', 'recurring_pattern', 'start_date', 'end_date',
     'status', 'notes'
@@ -542,6 +544,8 @@ const assignStudentToSchedule = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { student_id, total_amount = 0, notes } = req.body;
 
+  console.log(req.body)
+
   if (!student_id) {
     return res.status(400).json({
       success: false,
@@ -593,6 +597,8 @@ const assignStudentToSchedule = asyncHandler(async (req, res) => {
     .select('students.*', 'users.branch_id')
     .where('students.id', student_id)
     .first();
+
+  console.error(student);
 
   if (!student) {
     return res.status(404).json({
@@ -752,6 +758,690 @@ const getScheduleStudents = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Add comment/note to session
+// @route   POST /api/v1/schedules/:id/sessions/:sessionId/comments
+// @access  Private (Admin, Owner)
+const addSessionComment = asyncHandler(async (req, res) => {
+  const { id, sessionId } = req.params;
+  const { comment, type = 'note', is_private = false } = req.body;
+
+  if (!comment) {
+    return res.status(400).json({
+      success: false,
+      message: 'Comment text is required'
+    });
+  }
+
+  // Check if schedule exists
+  const schedule = await getScheduleWithDetails(id);
+  if (!schedule) {
+    return res.status(404).json({
+      success: false,
+      message: 'Schedule not found'
+    });
+  }
+
+  // Check permissions
+  if (req.user.role !== 'owner' && schedule.branch_id !== req.user.branch_id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied'
+    });
+  }
+
+  // Check if session exists
+  const session = await db('schedule_sessions')
+    .where('id', sessionId)
+    .where('schedule_id', id)
+    .first();
+
+  if (!session) {
+    return res.status(404).json({
+      success: false,
+      message: 'Session not found in this schedule'
+    });
+  }
+
+  // Add comment/note
+  const [commentId] = await db('session_comments').insert({
+    session_id: sessionId,
+    user_id: req.user.id,
+    comment: comment,
+    type: type, // 'note', 'comment', 'warning', 'important'
+    is_private: is_private,
+    created_at: new Date(),
+    updated_at: new Date()
+  });
+
+  // Get the created comment with user details
+  const newComment = await db('session_comments')
+    .join('users', 'session_comments.user_id', 'users.id')
+    .select(
+      'session_comments.*',
+      'users.username',
+      'users.first_name',
+      'users.last_name'
+    )
+    .where('session_comments.id', commentId)
+    .first();
+
+  res.status(201).json({
+    success: true,
+    message: 'Comment added successfully',
+    data: { comment: newComment }
+  });
+});
+
+// @desc    Get session comments
+// @route   GET /api/v1/schedules/:id/sessions/:sessionId/comments
+// @access  Private
+const getSessionComments = asyncHandler(async (req, res) => {
+  const { id, sessionId } = req.params;
+  const {
+    type,
+    include_private = 'false',
+    page = 1,
+    limit = 20,
+    sort_by = 'created_at',
+    sort_order = 'asc',
+    user_id,
+    search
+  } = req.query;
+
+  const offset = (page - 1) * limit;
+
+  // Check if schedule exists and permissions
+  const schedule = await getScheduleWithDetails(id);
+  if (!schedule) {
+    return res.status(404).json({
+      success: false,
+      message: 'Schedule not found'
+    });
+  }
+
+  if (req.user.role !== 'owner' && schedule.branch_id !== req.user.branch_id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied'
+    });
+  }
+
+  let query = db('session_comments')
+    .join('users', 'session_comments.user_id', 'users.id')
+    .select(
+      'session_comments.*',
+      'users.username',
+      'users.first_name',
+      'users.last_name'
+    )
+    .where('session_comments.session_id', sessionId);
+
+  // Filter by type if specified
+  if (type) {
+    query = query.where('session_comments.type', type);
+  }
+
+  // Filter by user if specified
+  if (user_id) {
+    query = query.where('session_comments.user_id', user_id);
+  }
+
+  // Search in comment text
+  if (search) {
+    query = query.where('session_comments.comment', 'like', `%${search}%`);
+  }
+
+  // Handle private comments visibility
+  if (include_private !== 'true') {
+    query = query.where('session_comments.is_private', false);
+  }
+
+  // Get total count for pagination
+  const totalQuery = query.clone().count('* as total');
+  const [{ total }] = await totalQuery;
+
+  // Apply sorting and pagination
+  const validSortFields = ['created_at', 'updated_at', 'type', 'comment'];
+  const sortField = validSortFields.includes(sort_by) ? sort_by : 'created_at';
+  const sortDir = sort_order.toLowerCase() === 'desc' ? 'desc' : 'asc';
+
+  const comments = await query
+    .orderBy(`session_comments.${sortField}`, sortDir)
+    .limit(parseInt(limit))
+    .offset(parseInt(offset));
+
+  res.json({
+    success: true,
+    data: {
+      comments,
+      pagination: {
+        current_page: parseInt(page),
+        per_page: parseInt(limit),
+        total: parseInt(total),
+        total_pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
+// @desc    Update session comment
+// @route   PUT /api/v1/schedules/:id/sessions/:sessionId/comments/:commentId
+// @access  Private (Admin, Owner, Comment Author)
+const updateSessionComment = asyncHandler(async (req, res) => {
+  const { id, sessionId, commentId } = req.params;
+  const { comment, type, is_private } = req.body;
+
+  // Check if comment exists
+  const existingComment = await db('session_comments')
+    .where('id', commentId)
+    .where('session_id', sessionId)
+    .first();
+
+  if (!existingComment) {
+    return res.status(404).json({
+      success: false,
+      message: 'Comment not found'
+    });
+  }
+
+  // Check permissions (owner, admin, or comment author)
+  const schedule = await getScheduleWithDetails(id);
+  const canEdit = req.user.role === 'owner' ||
+    (req.user.role === 'admin' && schedule.branch_id === req.user.branch_id) ||
+    existingComment.user_id === req.user.id;
+
+  if (!canEdit) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. You can only edit your own comments.'
+    });
+  }
+
+  // Update comment
+  const updateData = { updated_at: new Date() };
+  if (comment !== undefined) updateData.comment = comment;
+  if (type !== undefined) updateData.type = type;
+  if (is_private !== undefined) updateData.is_private = is_private;
+
+  await db('session_comments')
+    .where('id', commentId)
+    .update(updateData);
+
+  // Get updated comment
+  const updatedComment = await db('session_comments')
+    .join('users', 'session_comments.user_id', 'users.id')
+    .select(
+      'session_comments.*',
+      'users.username',
+      'users.first_name',
+      'users.last_name'
+    )
+    .where('session_comments.id', commentId)
+    .first();
+
+  res.json({
+    success: true,
+    message: 'Comment updated successfully',
+    data: { comment: updatedComment }
+  });
+});
+
+// @desc    Delete session comment
+// @route   DELETE /api/v1/schedules/:id/sessions/:sessionId/comments/:commentId
+// @access  Private (Admin, Owner, Comment Author)
+const deleteSessionComment = asyncHandler(async (req, res) => {
+  const { id, sessionId, commentId } = req.params;
+
+  // Check if comment exists
+  const existingComment = await db('session_comments')
+    .where('id', commentId)
+    .where('session_id', sessionId)
+    .first();
+
+  if (!existingComment) {
+    return res.status(404).json({
+      success: false,
+      message: 'Comment not found'
+    });
+  }
+
+  // Check permissions
+  const schedule = await getScheduleWithDetails(id);
+  const canDelete = req.user.role === 'owner' ||
+    (req.user.role === 'admin' && schedule.branch_id === req.user.branch_id) ||
+    existingComment.user_id === req.user.id;
+
+  if (!canDelete) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. You can only delete your own comments.'
+    });
+  }
+
+  await db('session_comments').where('id', commentId).del();
+
+  res.json({
+    success: true,
+    message: 'Comment deleted successfully'
+  });
+});
+
+// @desc    Edit session details
+// @route   PUT /api/v1/schedules/:id/sessions/:sessionId
+// @access  Private (Admin, Owner)
+const editSession = asyncHandler(async (req, res) => {
+  const { id, sessionId } = req.params;
+  const {
+    session_date,
+    start_time,
+    end_time,
+    teacher_id,
+    room_id,
+    status,
+    notes
+  } = req.body;
+
+  // Check if schedule exists
+  const schedule = await getScheduleWithDetails(id);
+  if (!schedule) {
+    return res.status(404).json({
+      success: false,
+      message: 'Schedule not found'
+    });
+  }
+
+  // Check permissions
+  if (req.user.role !== 'owner' && schedule.branch_id !== req.user.branch_id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied'
+    });
+  }
+
+  // Check if session exists
+  const session = await db('schedule_sessions')
+    .where('id', sessionId)
+    .where('schedule_id', id)
+    .first();
+
+  if (!session) {
+    return res.status(404).json({
+      success: false,
+      message: 'Session not found in this schedule'
+    });
+  }
+
+  // Check for conflicts if changing teacher, room, or time
+  if (teacher_id || room_id || start_time || end_time || session_date) {
+    const sessionDate = session_date || session.session_date.toISOString().split('T')[0];
+    const dayOfWeek = new Date(sessionDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+    const conflicts = await checkSessionConflicts(
+      teacher_id || session.teacher_id,
+      room_id || session.room_id,
+      dayOfWeek,
+      start_time || session.start_time,
+      end_time || session.end_time,
+      sessionDate,
+      sessionId
+    );
+
+    if (conflicts.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'Session conflicts detected',
+        conflicts
+      });
+    }
+  }
+
+  // Prepare update data
+  const updateData = { updated_at: new Date() };
+
+  if (session_date !== undefined) updateData.session_date = session_date;
+  if (start_time !== undefined) updateData.start_time = start_time;
+  if (end_time !== undefined) updateData.end_time = end_time;
+  if (teacher_id !== undefined) updateData.teacher_id = teacher_id;
+  if (room_id !== undefined) updateData.room_id = room_id;
+  if (status !== undefined) updateData.status = status;
+  if (notes !== undefined) updateData.notes = notes;
+
+  if (Object.keys(updateData).length === 1) { // Only updated_at
+    return res.status(400).json({
+      success: false,
+      message: 'No valid fields to update'
+    });
+  }
+
+  // Update session
+  await db('schedule_sessions')
+    .where('id', sessionId)
+    .update(updateData);
+
+  // Get updated session with details
+  const updatedSession = await db('schedule_sessions')
+    .leftJoin('schedule_time_slots', 'schedule_sessions.time_slot_id', 'schedule_time_slots.id')
+    .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
+    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .select(
+      'schedule_sessions.*',
+      'schedule_time_slots.day_of_week',
+      'teachers.first_name as teacher_first_name',
+      'teachers.last_name as teacher_last_name',
+      'rooms.room_name'
+    )
+    .where('schedule_sessions.id', sessionId)
+    .first();
+
+  // Add comment for the change if significant fields were updated
+  const significantFields = ['session_date', 'start_time', 'end_time', 'teacher_id', 'room_id', 'status'];
+  const changedFields = significantFields.filter(field => updateData[field] !== undefined);
+
+  if (changedFields.length > 0) {
+    await db('session_comments').insert({
+      session_id: sessionId,
+      user_id: req.user.id,
+      comment: `Session updated - Changed: ${changedFields.join(', ')}`,
+      type: 'important',
+      is_private: false,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+  }
+
+  res.json({
+    success: true,
+    message: 'Session updated successfully',
+    data: {
+      session: updatedSession,
+      fields_changed: changedFields
+    }
+  });
+});
+
+// Helper function to check session conflicts
+const checkSessionConflicts = async (teacherId, roomId, dayOfWeek, startTime, endTime, sessionDate, excludeSessionId = null) => {
+  const conflicts = [];
+
+  // Check teacher conflicts on the same date
+  if (teacherId) {
+    let teacherQuery = db('schedule_sessions')
+      .join('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+      .join('courses', 'schedules.course_id', 'courses.id')
+      .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+      .select(
+        'schedule_sessions.*',
+        'schedules.schedule_name',
+        'courses.name as course_name',
+        'rooms.room_name'
+      )
+      .where('schedule_sessions.teacher_id', teacherId)
+      .where('schedule_sessions.session_date', sessionDate)
+      .where('schedule_sessions.status', '!=', 'cancelled')
+      .where(function () {
+        this.where(function () {
+          this.where('schedule_sessions.start_time', '<=', startTime)
+            .where('schedule_sessions.end_time', '>', startTime);
+        }).orWhere(function () {
+          this.where('schedule_sessions.start_time', '<', endTime)
+            .where('schedule_sessions.end_time', '>=', endTime);
+        }).orWhere(function () {
+          this.where('schedule_sessions.start_time', '>=', startTime)
+            .where('schedule_sessions.end_time', '<=', endTime);
+        });
+      });
+
+    if (excludeSessionId) {
+      teacherQuery = teacherQuery.where('schedule_sessions.id', '!=', excludeSessionId);
+    }
+
+    const teacherConflicts = await teacherQuery;
+    if (teacherConflicts.length > 0) {
+      conflicts.push({
+        type: 'teacher',
+        message: 'Teacher has conflicting sessions on this date',
+        conflicts: teacherConflicts
+      });
+    }
+  }
+
+  // Check room conflicts on the same date
+  if (roomId) {
+    let roomQuery = db('schedule_sessions')
+      .join('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+      .join('courses', 'schedules.course_id', 'courses.id')
+      .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
+      .select(
+        'schedule_sessions.*',
+        'schedules.schedule_name',
+        'courses.name as course_name',
+        'teachers.first_name as teacher_first_name',
+        'teachers.last_name as teacher_last_name'
+      )
+      .where('schedule_sessions.room_id', roomId)
+      .where('schedule_sessions.session_date', sessionDate)
+      .where('schedule_sessions.status', '!=', 'cancelled')
+      .where(function () {
+        this.where(function () {
+          this.where('schedule_sessions.start_time', '<=', startTime)
+            .where('schedule_sessions.end_time', '>', startTime);
+        }).orWhere(function () {
+          this.where('schedule_sessions.start_time', '<', endTime)
+            .where('schedule_sessions.end_time', '>=', endTime);
+        }).orWhere(function () {
+          this.where('schedule_sessions.start_time', '>=', startTime)
+            .where('schedule_sessions.end_time', '<=', endTime);
+        });
+      });
+
+    if (excludeSessionId) {
+      roomQuery = roomQuery.where('schedule_sessions.id', '!=', excludeSessionId);
+    }
+
+    const roomConflicts = await roomQuery;
+    if (roomConflicts.length > 0) {
+      conflicts.push({
+        type: 'room',
+        message: 'Room has conflicting sessions on this date',
+        conflicts: roomConflicts
+      });
+    }
+  }
+
+  return conflicts;
+};
+
+// @desc    Create schedule exception by session ID
+// @route   POST /api/v1/schedules/:id/exceptions/session
+// @access  Private (Admin, Owner)
+const createScheduleExceptionBySession = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    session_id,
+    exception_type = 'cancellation',
+    new_date,
+    new_start_time,
+    new_end_time,
+    new_teacher_id,
+    new_room_id,
+    reason,
+    notes
+  } = req.body;
+
+  if (!session_id || !reason) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields: session_id, reason'
+    });
+  }
+
+  // Check if schedule exists
+  const schedule = await getScheduleWithDetails(id);
+  if (!schedule) {
+    return res.status(404).json({
+      success: false,
+      message: 'Schedule not found'
+    });
+  }
+
+  // Check permissions
+  if (req.user.role !== 'owner' && schedule.branch_id !== req.user.branch_id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied'
+    });
+  }
+
+  // Get the session details
+  const session = await db('schedule_sessions')
+    .where('id', session_id)
+    .where('schedule_id', id)
+    .first();
+
+  if (!session) {
+    return res.status(404).json({
+      success: false,
+      message: 'Session not found in this schedule'
+    });
+  }
+
+  // Extract date from session_date
+  const sessionDate = session.session_date.toISOString().split('T')[0];
+
+  // Check if exception already exists for this date
+  const existingException = await db('schedule_exceptions')
+    .where('schedule_id', id)
+    .where('exception_date', sessionDate)
+    .first();
+
+  if (existingException) {
+    return res.status(400).json({
+      success: false,
+      message: `Exception already exists for session date: ${sessionDate}`
+    });
+  }
+
+  const exceptionId = await db.transaction(async (trx) => {
+    // Insert the exception
+    const [insertedId] = await trx('schedule_exceptions').insert({
+      schedule_id: id,
+      exception_date: sessionDate,
+      exception_type: exception_type || 'cancellation',
+      new_date: new_date || null,
+      new_start_time: new_start_time || null,
+      new_end_time: new_end_time || null,
+      new_teacher_id: new_teacher_id || null,
+      new_room_id: new_room_id || null,
+      reason,
+      notes: notes || null,
+      created_by: req.user.id,
+      status: 'approved'
+    });
+
+    // Update the specific session based on exception type
+    if (exception_type === 'cancellation' || exception_type === '' || !exception_type) {
+      // Cancel the specific session
+      await trx('schedule_sessions')
+        .where('id', session_id)
+        .update({
+          status: 'cancelled',
+          cancellation_reason: reason,
+          notes: `Cancelled: ${reason}`,
+          updated_at: new Date()
+        });
+
+    } else if (exception_type === 'reschedule' && new_date) {
+      // Reschedule the specific session
+      const updateData = {
+        session_date: new_date,
+        notes: `Rescheduled from ${sessionDate}: ${reason}`,
+        updated_at: new Date()
+      };
+      if (new_start_time) updateData.start_time = new_start_time;
+      if (new_end_time) updateData.end_time = new_end_time;
+      if (new_teacher_id) updateData.teacher_id = new_teacher_id;
+      if (new_room_id) updateData.room_id = new_room_id;
+
+      await trx('schedule_sessions')
+        .where('id', session_id)
+        .update(updateData);
+
+    } else if (exception_type === 'teacher_change' && new_teacher_id) {
+      // Change teacher for the specific session
+      await trx('schedule_sessions')
+        .where('id', session_id)
+        .update({
+          teacher_id: new_teacher_id,
+          notes: `Teacher changed: ${reason}`,
+          updated_at: new Date()
+        });
+
+    } else if (exception_type === 'room_change' && new_room_id) {
+      // Change room for the specific session
+      await trx('schedule_sessions')
+        .where('id', session_id)
+        .update({
+          room_id: new_room_id,
+          notes: `Room changed: ${reason}`,
+          updated_at: new Date()
+        });
+
+    } else if (exception_type === 'time_change' && (new_start_time || new_end_time)) {
+      // Change time for the specific session
+      const updateData = {
+        notes: `Time changed: ${reason}`,
+        updated_at: new Date()
+      };
+      if (new_start_time) updateData.start_time = new_start_time;
+      if (new_end_time) updateData.end_time = new_end_time;
+
+      await trx('schedule_sessions')
+        .where('id', session_id)
+        .update(updateData);
+    }
+
+    return insertedId;
+  });
+
+  // Get the created exception with details
+  const exception = await db('schedule_exceptions')
+    .leftJoin('teachers', 'schedule_exceptions.new_teacher_id', 'teachers.id')
+    .leftJoin('rooms', 'schedule_exceptions.new_room_id', 'rooms.id')
+    .select(
+      'schedule_exceptions.*',
+      'teachers.first_name as new_teacher_first_name',
+      'teachers.last_name as new_teacher_last_name',
+      'rooms.room_name as new_room_name'
+    )
+    .where('schedule_exceptions.id', exceptionId)
+    .first();
+
+  // Get updated session details
+  const updatedSession = await db('schedule_sessions')
+    .leftJoin('schedule_time_slots', 'schedule_sessions.time_slot_id', 'schedule_time_slots.id')
+    .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
+    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .select(
+      'schedule_sessions.*',
+      'schedule_time_slots.day_of_week',
+      'teachers.first_name as teacher_first_name',
+      'teachers.last_name as teacher_last_name',
+      'rooms.room_name'
+    )
+    .where('schedule_sessions.id', session_id)
+    .first();
+
+  res.status(201).json({
+    success: true,
+    message: `Session ${exception_type === 'cancellation' ? 'cancelled' : 'updated'} successfully`,
+    data: {
+      exception,
+      updated_session: updatedSession,
+      original_session_date: sessionDate
+    }
+  });
+});
+
 // @desc    Create schedule exception (cancel, reschedule, etc.)
 // @route   POST /api/v1/schedules/:id/exceptions
 // @access  Private (Admin, Owner)
@@ -794,27 +1484,40 @@ const createScheduleException = asyncHandler(async (req, res) => {
   }
 
 
-    // Ensure id and exception_date are primitive values
-    const scheduleId = (typeof id === 'object' && id !== null) ? (id.id || String(id)) : id;
-    const exceptionDate = (typeof exception_date === 'object' && exception_date !== null) ? (exception_date.date || String(exception_date)) : exception_date;
-    const existingException = await db('schedule_exceptions')
-      .where('schedule_id', scheduleId)
-      .where('exception_date', exceptionDate)
-      .first();
+  // Ensure id and exception_date are primitive values
+  const scheduleId = (typeof id === 'object' && id !== null) ? (id.id || String(id)) : id;
 
-    if (existingException) {
-      return res.status(400).json({
-        success: false,
-        message: 'Exception already exists for this date'
-      });
-    }
+  // Handle date properly - convert to local date format YYYY-MM-DD
+  let exceptionDate;
+  if (typeof exception_date === 'object' && exception_date !== null) {
+    exceptionDate = exception_date.date || String(exception_date);
+  } else {
+    exceptionDate = String(exception_date);
+  }
+
+  // If the date includes time or timezone info, extract just the date part
+  if (exceptionDate.includes('T')) {
+    exceptionDate = exceptionDate.split('T')[0];
+  }
+
+  const existingException = await db('schedule_exceptions')
+    .where('schedule_id', scheduleId)
+    .where('exception_date', exceptionDate)
+    .first();
+
+  if (existingException) {
+    return res.status(400).json({
+      success: false,
+      message: 'Exception already exists for this date'
+    });
+  }
 
   const exceptionId = await db.transaction(async (trx) => {
-    // Insert the exception
+    // Insert the exception with corrected data
     const [insertedId] = await trx('schedule_exceptions').insert({
       schedule_id: scheduleId,
-      exception_date: exceptionDate,
-      exception_type,
+      exception_date: exceptionDate, // Use the formatted date
+      exception_type: exception_type || 'cancellation', // Default to cancellation if empty
       new_date: new_date || null,
       new_start_time: new_start_time || null,
       new_end_time: new_end_time || null,
@@ -827,64 +1530,77 @@ const createScheduleException = asyncHandler(async (req, res) => {
     });
 
     // Update affected schedule sessions based on exception type
-    if (exception_type === 'cancellation') {
-      // Cancel sessions on this date
-      await trx('schedule_sessions')
-        .where('schedule_id', scheduleId)
-        .where('session_date', exceptionDate)
-        .update({
-          status: 'cancelled',
-          cancellation_reason: reason,
-          notes: `Cancelled: ${reason}`,
-          updated_at: new Date()
-        });
+    // If exception_type is empty or 'cancellation', treat as cancellation
+    if (exception_type === 'cancellation' || exception_type === '' || !exception_type) {
+      // Cancel sessions on this date - use DATE() function for comparison
+      await trx.raw(`
+        UPDATE schedule_sessions 
+        SET 
+          status = 'cancelled',
+          cancellation_reason = ?,
+          notes = ?,
+          updated_at = NOW()
+        WHERE 
+          schedule_id = ? AND 
+          DATE(session_date) = ?
+      `, [reason, `Cancelled: ${reason}`, scheduleId, exceptionDate]);
+
     } else if (exception_type === 'reschedule' && new_date) {
       // Reschedule sessions to new date
-      await trx('schedule_sessions')
-        .where('schedule_id', scheduleId)
-        .where('session_date', exceptionDate)
-        .update({
-          session_date: new_date,
-          start_time: new_start_time || trx.raw('start_time'),
-          end_time: new_end_time || trx.raw('end_time'),
-          teacher_id: new_teacher_id || trx.raw('teacher_id'),
-          room_id: new_room_id || trx.raw('room_id'),
-          notes: `Rescheduled from ${exceptionDate}: ${reason}`,
-          updated_at: new Date()
-        });
+      await trx.raw(`
+        UPDATE schedule_sessions 
+        SET 
+          session_date = ?,
+          start_time = COALESCE(?, start_time),
+          end_time = COALESCE(?, end_time),
+          teacher_id = COALESCE(?, teacher_id),
+          room_id = COALESCE(?, room_id),
+          notes = ?,
+          updated_at = NOW()
+        WHERE 
+          schedule_id = ? AND 
+          DATE(session_date) = ?
+      `, [new_date, new_start_time, new_end_time, new_teacher_id, new_room_id, `Rescheduled from ${exceptionDate}: ${reason}`, scheduleId, exceptionDate]);
+
     } else if (exception_type === 'teacher_change' && new_teacher_id) {
       // Change teacher for sessions on this date
-      await trx('schedule_sessions')
-        .where('schedule_id', scheduleId)
-        .where('session_date', exceptionDate)
-        .update({
-          teacher_id: new_teacher_id,
-          notes: `Teacher changed: ${reason}`,
-          updated_at: new Date()
-        });
+      await trx.raw(`
+        UPDATE schedule_sessions 
+        SET 
+          teacher_id = ?,
+          notes = ?,
+          updated_at = NOW()
+        WHERE 
+          schedule_id = ? AND 
+          DATE(session_date) = ?
+      `, [new_teacher_id, `Teacher changed: ${reason}`, scheduleId, exceptionDate]);
+
     } else if (exception_type === 'room_change' && new_room_id) {
       // Change room for sessions on this date
-      await trx('schedule_sessions')
-        .where('schedule_id', scheduleId)
-        .where('session_date', exceptionDate)
-        .update({
-          room_id: new_room_id,
-          notes: `Room changed: ${reason}`,
-          updated_at: new Date()
-        });
+      await trx.raw(`
+        UPDATE schedule_sessions 
+        SET 
+          room_id = ?,
+          notes = ?,
+          updated_at = NOW()
+        WHERE 
+          schedule_id = ? AND 
+          DATE(session_date) = ?
+      `, [new_room_id, `Room changed: ${reason}`, scheduleId, exceptionDate]);
+
     } else if (exception_type === 'time_change' && (new_start_time || new_end_time)) {
       // Change time for sessions on this date
-      const updateData = {
-        notes: `Time changed: ${reason}`,
-        updated_at: new Date()
-      };
-      if (new_start_time) updateData.start_time = new_start_time;
-      if (new_end_time) updateData.end_time = new_end_time;
-      
-      await trx('schedule_sessions')
-        .where('schedule_id', scheduleId)
-        .where('session_date', exceptionDate)
-        .update(updateData);
+      await trx.raw(`
+        UPDATE schedule_sessions 
+        SET 
+          start_time = COALESCE(?, start_time),
+          end_time = COALESCE(?, end_time),
+          notes = ?,
+          updated_at = NOW()
+        WHERE 
+          schedule_id = ? AND 
+          DATE(session_date) = ?
+      `, [new_start_time, new_end_time, `Time changed: ${reason}`, scheduleId, exceptionDate]);
     }
 
     return insertedId;
@@ -1022,7 +1738,7 @@ const createMakeupSession = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: 'Makeup session created successfully',
-    data: { 
+    data: {
       makeup_session: makeupSession,
       original_session: originalSession
     }
@@ -1084,7 +1800,7 @@ const handleStudentLeave = asyncHandler(async (req, res) => {
   }
 
   // Calculate student age for leave policy
-  const age = enrollment.date_of_birth 
+  const age = enrollment.date_of_birth
     ? Math.floor((new Date() - new Date(enrollment.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000))
     : null;
 
@@ -1092,11 +1808,11 @@ const handleStudentLeave = asyncHandler(async (req, res) => {
   const courseHours = schedule.total_hours;
   const currentStudents = schedule.current_students;
   const isPrivateClass = currentStudents === 1;
-  
+
   // Calculate leave rights based on policy
   let allowedLeaves = 0;
   let allowedMakeups = 0;
-  
+
   if (isPrivateClass) {
     // Private class (1 student)
     if (courseHours === 40 || courseHours === 50) {
@@ -1192,7 +1908,7 @@ const handleStudentLeave = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: isPrivateClass 
+    message: isPrivateClass
       ? `Leave approved. Remaining leaves: ${allowedLeaves - currentLeaveCount - 1}/${allowedLeaves}`
       : `Absence recorded. Makeup session can be scheduled.`,
     data: {
@@ -1358,6 +2074,19 @@ const handleCourseDrop = asyncHandler(async (req, res) => {
 // @access  Private
 const getMakeupSessions = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const {
+    page = 1,
+    limit = 20,
+    status,
+    start_date,
+    end_date,
+    teacher_id,
+    room_id,
+    sort_by = 'session_date',
+    sort_order = 'asc'
+  } = req.query;
+
+  const offset = (page - 1) * limit;
 
   // Check if schedule exists and permissions
   const schedule = await getScheduleWithDetails(id);
@@ -1376,7 +2105,7 @@ const getMakeupSessions = asyncHandler(async (req, res) => {
   }
 
   // Get makeup sessions with original session details
-  const makeupSessions = await db('schedule_sessions as makeup')
+  let query = db('schedule_sessions as makeup')
     .join('schedule_sessions as original', 'makeup.makeup_for_session_id', 'original.id')
     .leftJoin('teachers', 'makeup.teacher_id', 'teachers.id')
     .leftJoin('rooms', 'makeup.room_id', 'rooms.id')
@@ -1391,8 +2120,43 @@ const getMakeupSessions = asyncHandler(async (req, res) => {
       'rooms.room_name'
     )
     .where('makeup.schedule_id', id)
-    .where('makeup.is_makeup_session', true)
-    .orderBy('makeup.session_date', 'asc');
+    .where('makeup.is_makeup_session', true);
+
+  // Apply filters
+  if (status) {
+    query = query.where('makeup.status', status);
+  }
+  if (start_date) {
+    query = query.where('makeup.session_date', '>=', start_date);
+  }
+  if (end_date) {
+    query = query.where('makeup.session_date', '<=', end_date);
+  }
+  if (teacher_id) {
+    query = query.where('makeup.teacher_id', teacher_id);
+  }
+  if (room_id) {
+    query = query.where('makeup.room_id', room_id);
+  }
+
+  // Get total count for pagination
+  const totalQuery = query.clone().count('* as total');
+  const [{ total }] = await totalQuery;
+
+  // Apply sorting and pagination
+  const validSortFields = ['session_date', 'original_date', 'start_time', 'status', 'created_at'];
+  const sortField = validSortFields.includes(sort_by) ? sort_by : 'session_date';
+  const sortDir = sort_order.toLowerCase() === 'desc' ? 'desc' : 'asc';
+
+  let orderByField = `makeup.${sortField}`;
+  if (sortField === 'original_date') {
+    orderByField = 'original.session_date';
+  }
+
+  const makeupSessions = await query
+    .orderBy(orderByField, sortDir)
+    .limit(parseInt(limit))
+    .offset(parseInt(offset));
 
   res.json({
     success: true,
@@ -1402,22 +2166,40 @@ const getMakeupSessions = asyncHandler(async (req, res) => {
         schedule_name: schedule.schedule_name,
         course_name: schedule.course_name
       },
-      makeup_sessions: makeupSessions
+      makeup_sessions: makeupSessions,
+      pagination: {
+        current_page: parseInt(page),
+        per_page: parseInt(limit),
+        total: parseInt(total),
+        total_pages: Math.ceil(total / limit)
+      }
     }
   });
 });
 
-// @desc    Get schedule sessions with exceptions
+// @desc    Get schedule sessions with detailed information
 // @route   GET /api/v1/schedules/:id/sessions
 // @access  Private
 const getScheduleSessions = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { 
+  const {
     status,
-    start_date, 
+    start_date,
     end_date,
-    include_cancelled = 'false'
+    include_cancelled = 'false',
+    page = 1,
+    limit = 20,
+    sort_by = 'session_date',
+    sort_order = 'asc',
+    teacher_id,
+    room_id,
+    session_number,
+    week_number,
+    is_makeup_session,
+    has_comments = null
   } = req.query;
+
+  const offset = (page - 1) * limit;
 
   // Check if schedule exists and permissions
   const schedule = await getScheduleWithDetails(id);
@@ -1438,13 +2220,19 @@ const getScheduleSessions = asyncHandler(async (req, res) => {
   let query = db('schedule_sessions')
     .leftJoin('schedule_time_slots', 'schedule_sessions.time_slot_id', 'schedule_time_slots.id')
     .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
+    .leftJoin('users as teacher_users', 'teachers.user_id', 'teacher_users.id')
     .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
     .select(
       'schedule_sessions.*',
       'schedule_time_slots.day_of_week',
       'teachers.first_name as teacher_first_name',
       'teachers.last_name as teacher_last_name',
-      'rooms.room_name'
+      'teachers.nationality as teacher_nationality',
+      'teachers.teacher_type as teacher_type',
+      'teacher_users.phone as teacher_phone',
+      'teacher_users.email as teacher_email',
+      'rooms.room_name',
+      'rooms.capacity as room_capacity'
     )
     .where('schedule_sessions.schedule_id', id);
 
@@ -1458,15 +2246,164 @@ const getScheduleSessions = asyncHandler(async (req, res) => {
   if (end_date) {
     query = query.where('schedule_sessions.session_date', '<=', end_date);
   }
+  if (teacher_id) {
+    query = query.where('schedule_sessions.teacher_id', teacher_id);
+  }
+  if (room_id) {
+    query = query.where('schedule_sessions.room_id', room_id);
+  }
+  if (session_number) {
+    query = query.where('schedule_sessions.session_number', session_number);
+  }
+  if (week_number) {
+    query = query.where('schedule_sessions.week_number', week_number);
+  }
+  if (is_makeup_session !== undefined) {
+    query = query.where('schedule_sessions.is_makeup_session', is_makeup_session === 'true');
+  }
   if (include_cancelled !== 'true') {
     query = query.where('schedule_sessions.status', '!=', 'cancelled');
   }
 
-  const sessions = await query.orderBy('schedule_sessions.session_date', 'asc').orderBy('schedule_sessions.start_time', 'asc');
+  // Filter by sessions that have comments
+  if (has_comments === 'true') {
+    query = query.whereExists(function () {
+      this.select('*')
+        .from('session_comments')
+        .whereRaw('session_comments.session_id = schedule_sessions.id');
+    });
+  } else if (has_comments === 'false') {
+    query = query.whereNotExists(function () {
+      this.select('*')
+        .from('session_comments')
+        .whereRaw('session_comments.session_id = schedule_sessions.id');
+    });
+  }
+
+  // Get total count for pagination
+  const totalQuery = query.clone().count('* as total');
+  const [{ total }] = await totalQuery;
+
+  // Apply sorting and pagination
+  const validSortFields = ['session_date', 'session_number', 'week_number', 'start_time', 'end_time', 'status', 'created_at'];
+  const sortField = validSortFields.includes(sort_by) ? sort_by : 'session_date';
+  const sortDir = sort_order.toLowerCase() === 'desc' ? 'desc' : 'asc';
+
+  let sessions = await query
+    .orderBy(`schedule_sessions.${sortField}`, sortDir)
+    .orderBy('schedule_sessions.start_time', 'asc') // Secondary sort by start_time
+    .limit(parseInt(limit))
+    .offset(parseInt(offset));
+
+  // Get students enrolled in this schedule with role-based filtering
+  const students = await db('schedule_students')
+    .join('students', 'schedule_students.student_id', 'students.id')
+    .join('users', 'students.user_id', 'users.id')
+    .select(
+      'students.*',
+      'users.email',
+      'users.phone',
+      'users.line_id',
+      'schedule_students.enrollment_date',
+      'schedule_students.status as enrollment_status',
+      'schedule_students.total_amount',
+      'schedule_students.notes as enrollment_notes'
+    )
+    .where('schedule_students.schedule_id', id)
+    .where('schedule_students.status', 'active')
+    .orderBy('students.first_name', 'asc');
+
+  // Filter student data based on user role
+  const filteredStudents = students.map(student => {
+    if (req.user.role === 'owner' || req.user.role === 'admin') {
+      // Admin and Owner see all student information
+      return student;
+    } else {
+      // Teachers see limited information
+      return {
+        id: student.id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        nickname: student.nickname,
+        date_of_birth: student.date_of_birth,
+        current_education: student.current_education,
+        enrollment_date: student.enrollment_date,
+        enrollment_status: student.enrollment_status
+      };
+    }
+  });
+
+  // Get comment counts for sessions
+  const sessionIds = sessions.map(s => s.id);
+  let commentCounts = {};
+
+  if (sessionIds.length > 0) {
+    const counts = await db('session_comments')
+      .select('session_id')
+      .count('id as comment_count')
+      .whereIn('session_id', sessionIds)
+      .groupBy('session_id');
+
+    commentCounts = counts.reduce((acc, item) => {
+      acc[item.session_id] = parseInt(item.comment_count);
+      return acc;
+    }, {});
+  }
+
+  // Get attendance data for sessions
+  let attendanceData = {};
+  if (sessionIds.length > 0) {
+    const attendance = await db('student_attendances')
+      .select('session_id', 'status')
+      .count('id as count')
+      .whereIn('session_id', sessionIds)
+      .groupBy('session_id', 'status');
+
+    attendance.forEach(item => {
+      if (!attendanceData[item.session_id]) {
+        attendanceData[item.session_id] = {};
+      }
+      attendanceData[item.session_id][item.status] = parseInt(item.count);
+    });
+  }
+
+  // Filter teacher data based on user role
+  sessions = sessions.map(session => {
+    const teacherData = req.user.role === 'owner' || req.user.role === 'admin'
+      ? {
+        teacher_first_name: session.teacher_first_name,
+        teacher_last_name: session.teacher_last_name,
+        teacher_nationality: session.teacher_nationality,
+        teacher_type: session.teacher_type,
+        teacher_phone: session.teacher_phone,
+        teacher_email: session.teacher_email
+      }
+      : {
+        teacher_first_name: session.teacher_first_name,
+        teacher_last_name: session.teacher_last_name,
+        teacher_nationality: session.teacher_nationality,
+        teacher_type: session.teacher_type
+      };
+
+    return {
+      ...session,
+      ...teacherData,
+      comment_count: commentCounts[session.id] || 0,
+      attendance_summary: attendanceData[session.id] || {}
+    };
+  });
 
   // Get related exceptions
   const exceptions = await db('schedule_exceptions')
-    .where('schedule_id', id)
+    .leftJoin('teachers', 'schedule_exceptions.new_teacher_id', 'teachers.id')
+    .leftJoin('rooms', 'schedule_exceptions.new_room_id', 'rooms.id')
+    .select(
+      'schedule_exceptions.*',
+      'teachers.first_name as new_teacher_first_name',
+      'teachers.last_name as new_teacher_last_name',
+      'rooms.room_name as new_room_name'
+    )
+    .where('schedule_exceptions.schedule_id', id)
     .orderBy('exception_date', 'asc');
 
   res.json({
@@ -1476,16 +2413,36 @@ const getScheduleSessions = asyncHandler(async (req, res) => {
         id: schedule.id,
         schedule_name: schedule.schedule_name,
         course_name: schedule.course_name,
-        status: schedule.status
+        course_code: schedule.course_code,
+        branch_name: schedule.branch_name,
+        total_hours: schedule.total_hours,
+        hours_per_session: schedule.hours_per_session,
+        max_students: schedule.max_students,
+        current_students: filteredStudents.length,
+        available_spots: schedule.max_students - filteredStudents.length,
+        start_date: schedule.start_date,
+        end_date: schedule.end_date,
+        status: schedule.status,
+        schedule_type: schedule.schedule_type,
+        auto_reschedule_holidays: schedule.auto_reschedule_holidays
       },
+      students: filteredStudents,
       sessions: sessions,
       exceptions: exceptions,
+      pagination: {
+        current_page: parseInt(page),
+        per_page: parseInt(limit),
+        total: parseInt(total),
+        total_pages: Math.ceil(total / limit)
+      },
       summary: {
-        total_sessions: sessions.length,
+        total_sessions: parseInt(total),
         scheduled: sessions.filter(s => s.status === 'scheduled').length,
         completed: sessions.filter(s => s.status === 'completed').length,
         cancelled: sessions.filter(s => s.status === 'cancelled').length,
-        total_exceptions: exceptions.length
+        makeup_sessions: sessions.filter(s => s.is_makeup_session).length,
+        total_exceptions: exceptions.length,
+        total_enrolled_students: filteredStudents.length
       }
     }
   });
@@ -1495,7 +2452,19 @@ const getScheduleSessions = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/schedules/weekly
 // @access  Private
 const getWeeklySchedule = asyncHandler(async (req, res) => {
-  const { week_start, teacher_id, room_id, branch_id } = req.query;
+  const {
+    week_start,
+    teacher_id,
+    room_id,
+    branch_id,
+    status = 'active',
+    course_id,
+    min_students,
+    max_students,
+    include_students = 'false',
+    time_range_start,
+    time_range_end
+  } = req.query;
 
   let query = db('schedules')
     .join('courses', 'schedules.course_id', 'courses.id')
@@ -1509,14 +2478,18 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
       'teachers.first_name as teacher_first_name',
       'teachers.last_name as teacher_last_name',
       'rooms.room_name',
-      'branches.name as branch_name'
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
     )
-    .where('schedules.status', 'active');
+    .where('schedules.status', status);
 
   // Apply filters
   if (teacher_id) query = query.where('schedules.teacher_id', teacher_id);
   if (room_id) query = query.where('schedules.room_id', room_id);
   if (branch_id) query = query.where('courses.branch_id', branch_id);
+  if (course_id) query = query.where('schedules.course_id', course_id);
+  if (time_range_start) query = query.where('schedules.start_time', '>=', time_range_start);
+  if (time_range_end) query = query.where('schedules.end_time', '<=', time_range_end);
 
   // Branch permission check
   if (req.user.role !== 'owner') {
@@ -1528,7 +2501,7 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
   // Get student counts
   const scheduleIds = schedules.map(s => s.id);
   let studentCounts = {};
-  
+
   if (scheduleIds.length > 0) {
     const counts = await db('schedule_students')
       .select('schedule_id')
@@ -1543,12 +2516,23 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
     }, {});
   }
 
+  // Apply student count filters if specified
+  let filteredSchedules = schedules;
+  if (min_students || max_students) {
+    filteredSchedules = schedules.filter(schedule => {
+      const currentStudents = studentCounts[schedule.id] || 0;
+      if (min_students && currentStudents < parseInt(min_students)) return false;
+      if (max_students && currentStudents > parseInt(max_students)) return false;
+      return true;
+    });
+  }
+
   // Get exceptions for the week if week_start is provided
   let exceptions = [];
   if (week_start) {
     const weekEnd = new Date(week_start);
     weekEnd.setDate(weekEnd.getDate() + 6);
-    
+
     exceptions = await db('schedule_exceptions')
       .leftJoin('teachers', 'schedule_exceptions.new_teacher_id', 'teachers.id')
       .leftJoin('rooms', 'schedule_exceptions.new_room_id', 'rooms.id')
@@ -1574,12 +2558,44 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
     sunday: []
   };
 
-  schedules.forEach(schedule => {
+  // Include student details if requested
+  let studentDetails = {};
+  if (include_students === 'true' && scheduleIds.length > 0) {
+    const students = await db('schedule_students')
+      .join('students', 'schedule_students.student_id', 'students.id')
+      .join('users', 'students.user_id', 'users.id')
+      .select(
+        'schedule_students.schedule_id',
+        'students.id as student_id',
+        'students.first_name',
+        'students.last_name',
+        'students.nickname'
+      )
+      .whereIn('schedule_students.schedule_id', scheduleIds)
+      .where('schedule_students.status', 'active')
+      .orderBy('students.first_name', 'asc');
+
+    // Group students by schedule
+    students.forEach(student => {
+      if (!studentDetails[student.schedule_id]) {
+        studentDetails[student.schedule_id] = [];
+      }
+      studentDetails[student.schedule_id].push({
+        id: student.student_id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        nickname: student.nickname
+      });
+    });
+  }
+
+  filteredSchedules.forEach(schedule => {
     const scheduleWithCounts = {
       ...schedule,
       current_students: studentCounts[schedule.id] || 0,
       available_spots: schedule.max_students - (studentCounts[schedule.id] || 0),
-      exceptions: exceptions.filter(ex => ex.schedule_id === schedule.id)
+      exceptions: exceptions.filter(ex => ex.schedule_id === schedule.id),
+      students: include_students === 'true' ? (studentDetails[schedule.id] || []) : undefined
     };
 
     weeklySchedule[schedule.day_of_week].push(scheduleWithCounts);
@@ -1590,8 +2606,24 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
     data: {
       week_start: week_start || null,
       weekly_schedule: weeklySchedule,
-      total_schedules: schedules.length,
-      total_exceptions: exceptions.length
+      total_schedules: filteredSchedules.length,
+      total_exceptions: exceptions.length,
+      summary: {
+        total_active_schedules: filteredSchedules.length,
+        schedules_by_day: {
+          monday: weeklySchedule.monday.length,
+          tuesday: weeklySchedule.tuesday.length,
+          wednesday: weeklySchedule.wednesday.length,
+          thursday: weeklySchedule.thursday.length,
+          friday: weeklySchedule.friday.length,
+          saturday: weeklySchedule.saturday.length,
+          sunday: weeklySchedule.sunday.length
+        },
+        total_students_enrolled: Object.values(studentCounts).reduce((sum, count) => sum + count, 0),
+        average_class_size: filteredSchedules.length > 0
+          ? (Object.values(studentCounts).reduce((sum, count) => sum + count, 0) / filteredSchedules.length).toFixed(2)
+          : 0
+      }
     }
   });
 });
@@ -1612,7 +2644,8 @@ const getScheduleWithDetails = async (scheduleId) => {
       'teachers.last_name as teacher_last_name',
       'rooms.room_name',
       'rooms.capacity as room_capacity',
-      'branches.name as branch_name'
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
     )
     .where('schedules.id', scheduleId)
     .first();
@@ -1649,14 +2682,14 @@ const checkScheduleConflicts = async (teacherId, roomId, dayOfWeek, startTime, e
       .where('schedules.teacher_id', teacherId)
       .where('schedules.day_of_week', dayOfWeek)
       .where('schedules.status', '!=', 'cancelled')
-      .where(function() {
-        this.where(function() {
+      .where(function () {
+        this.where(function () {
           this.where('schedules.start_time', '<=', startTime)
             .where('schedules.end_time', '>', startTime);
-        }).orWhere(function() {
+        }).orWhere(function () {
           this.where('schedules.start_time', '<', endTime)
             .where('schedules.end_time', '>=', endTime);
-        }).orWhere(function() {
+        }).orWhere(function () {
           this.where('schedules.start_time', '>=', startTime)
             .where('schedules.end_time', '<=', endTime);
         });
@@ -1690,14 +2723,14 @@ const checkScheduleConflicts = async (teacherId, roomId, dayOfWeek, startTime, e
       .where('schedules.room_id', roomId)
       .where('schedules.day_of_week', dayOfWeek)
       .where('schedules.status', '!=', 'cancelled')
-      .where(function() {
-        this.where(function() {
+      .where(function () {
+        this.where(function () {
           this.where('schedules.start_time', '<=', startTime)
             .where('schedules.end_time', '>', startTime);
-        }).orWhere(function() {
+        }).orWhere(function () {
           this.where('schedules.start_time', '<', endTime)
             .where('schedules.end_time', '>=', endTime);
-        }).orWhere(function() {
+        }).orWhere(function () {
           this.where('schedules.start_time', '>=', startTime)
             .where('schedules.end_time', '<=', endTime);
         });
@@ -1720,6 +2753,435 @@ const checkScheduleConflicts = async (teacherId, roomId, dayOfWeek, startTime, e
   return conflicts;
 };
 
+// @desc    Apply existing exceptions to sessions (utility function)
+// @route   POST /api/v1/schedules/:id/apply-exceptions
+// @access  Private (Admin, Owner)
+const applyExistingExceptions = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Check if schedule exists
+  const schedule = await getScheduleWithDetails(id);
+  if (!schedule) {
+    return res.status(404).json({
+      success: false,
+      message: 'Schedule not found'
+    });
+  }
+
+  // Check permissions
+  if (req.user.role !== 'owner' && schedule.branch_id !== req.user.branch_id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied'
+    });
+  }
+
+  // Get all approved exceptions for this schedule
+  const exceptions = await db('schedule_exceptions')
+    .where('schedule_id', id)
+    .where('status', 'approved');
+
+  if (exceptions.length === 0) {
+    return res.json({
+      success: true,
+      message: 'No exceptions found to apply',
+      data: { exceptions_applied: 0 }
+    });
+  }
+
+  let appliedCount = 0;
+
+  await db.transaction(async (trx) => {
+    for (const exception of exceptions) {
+      const { exception_date, exception_type, new_date, new_start_time, new_end_time, new_teacher_id, new_room_id, reason } = exception;
+
+      // Convert exception date to proper format for comparison
+      let exceptionDateFormatted = exception_date;
+      if (typeof exception_date === 'string' && exception_date.includes('T')) {
+        exceptionDateFormatted = exception_date.split('T')[0];
+      }
+
+      // Apply each exception type
+      if (exception_type === 'cancellation' || exception_type === '' || !exception_type) {
+        // Cancel sessions on this date - use DATE() function for comparison
+        const updatedRows = await trx.raw(`
+          UPDATE schedule_sessions 
+          SET 
+            status = 'cancelled',
+            cancellation_reason = ?,
+            notes = ?,
+            updated_at = NOW()
+          WHERE 
+            schedule_id = ? AND 
+            DATE(session_date) = ? AND 
+            status != 'cancelled'
+        `, [reason, `Cancelled: ${reason}`, id, exceptionDateFormatted]);
+
+        if (updatedRows[0].affectedRows > 0) appliedCount++;
+
+      } else if (exception_type === 'reschedule' && new_date) {
+        // Reschedule sessions to new date
+        const updatedRows = await trx.raw(`
+          UPDATE schedule_sessions 
+          SET 
+            session_date = ?,
+            start_time = COALESCE(?, start_time),
+            end_time = COALESCE(?, end_time),
+            teacher_id = COALESCE(?, teacher_id),
+            room_id = COALESCE(?, room_id),
+            notes = ?,
+            updated_at = NOW()
+          WHERE 
+            schedule_id = ? AND 
+            DATE(session_date) = ?
+        `, [new_date, new_start_time, new_end_time, new_teacher_id, new_room_id, `Rescheduled from ${exceptionDateFormatted}: ${reason}`, id, exceptionDateFormatted]);
+
+        if (updatedRows[0].affectedRows > 0) appliedCount++;
+
+      } else if (exception_type === 'teacher_change' && new_teacher_id) {
+        // Change teacher for sessions on this date
+        const updatedRows = await trx.raw(`
+          UPDATE schedule_sessions 
+          SET 
+            teacher_id = ?,
+            notes = ?,
+            updated_at = NOW()
+          WHERE 
+            schedule_id = ? AND 
+            DATE(session_date) = ?
+        `, [new_teacher_id, `Teacher changed: ${reason}`, id, exceptionDateFormatted]);
+
+        if (updatedRows[0].affectedRows > 0) appliedCount++;
+
+      } else if (exception_type === 'room_change' && new_room_id) {
+        // Change room for sessions on this date
+        const updatedRows = await trx.raw(`
+          UPDATE schedule_sessions 
+          SET 
+            room_id = ?,
+            notes = ?,
+            updated_at = NOW()
+          WHERE 
+            schedule_id = ? AND 
+            DATE(session_date) = ?
+        `, [new_room_id, `Room changed: ${reason}`, id, exceptionDateFormatted]);
+
+        if (updatedRows[0].affectedRows > 0) appliedCount++;
+
+      } else if (exception_type === 'time_change' && (new_start_time || new_end_time)) {
+        // Change time for sessions on this date
+        const updatedRows = await trx.raw(`
+          UPDATE schedule_sessions 
+          SET 
+            start_time = COALESCE(?, start_time),
+            end_time = COALESCE(?, end_time),
+            notes = ?,
+            updated_at = NOW()
+          WHERE 
+            schedule_id = ? AND 
+            DATE(session_date) = ?
+        `, [new_start_time, new_end_time, `Time changed: ${reason}`, id, exceptionDateFormatted]);
+
+        if (updatedRows[0].affectedRows > 0) appliedCount++;
+      }
+    }
+  });
+
+  res.json({
+    success: true,
+    message: `Applied ${appliedCount} exceptions to schedule sessions`,
+    data: {
+      total_exceptions: exceptions.length,
+      exceptions_applied: appliedCount
+    }
+  });
+});
+
+// @desc    Get all schedules by day/week/month with holidays
+// @route   GET /api/v1/schedules/calendar
+// @access  Private
+const getScheduleCalendar = asyncHandler(async (req, res) => {
+  const {
+    view = 'week', // 'day', 'week', 'month'
+    date, // YYYY-MM-DD (required) - วันที่ใดก็ได้ที่ต้องการดู ไม่จำเป็นต้องเป็นปัจจุบัน
+    branch_id,
+    teacher_id,
+    room_id,
+    course_id,
+    status = 'active',
+    include_students = 'false',
+    include_holidays = 'true'
+  } = req.query;
+
+  if (!date) {
+    return res.status(400).json({
+      success: false,
+      message: 'Date parameter is required (YYYY-MM-DD format)'
+    });
+  }
+
+  const targetDate = new Date(date);
+  let startDate, endDate;
+
+  // Calculate date range based on view
+  switch (view) {
+    case 'day':
+      startDate = new Date(targetDate);
+      endDate = new Date(targetDate);
+      break;
+    case 'week':
+      // Start from Monday of the week
+      startDate = new Date(targetDate);
+      const dayOfWeek = startDate.getDay();
+      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startDate.setDate(startDate.getDate() - daysFromMonday);
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 6);
+      break;
+    case 'month':
+      startDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+      endDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
+      break;
+    default:
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid view parameter. Use: day, week, or month'
+      });
+  }
+
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
+
+  // Get all sessions within date range
+  let sessionQuery = db('schedule_sessions')
+    .join('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+    .join('courses', 'schedules.course_id', 'courses.id')
+    .join('branches', 'courses.branch_id', 'branches.id')
+    .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
+    .leftJoin('users as teacher_users', 'teachers.user_id', 'teacher_users.id')
+    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .leftJoin('schedule_time_slots', 'schedule_sessions.time_slot_id', 'schedule_time_slots.id')
+    .select(
+      'schedule_sessions.*',
+      'schedules.schedule_name',
+      'courses.name as course_name',
+      'courses.code as course_code',
+      'branches.id as branch_id',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
+      'teachers.first_name as teacher_first_name',
+      'teachers.last_name as teacher_last_name',
+      'teachers.nationality as teacher_nationality',
+      'teachers.teacher_type as teacher_type',
+      'teacher_users.phone as teacher_phone',
+      'teacher_users.email as teacher_email',
+      'rooms.room_name',
+      'rooms.capacity as room_capacity',
+      'schedule_time_slots.day_of_week'
+    )
+    .whereBetween('schedule_sessions.session_date', [startDateStr, endDateStr])
+    .where('schedules.status', status);
+
+  // Apply filters
+  if (branch_id) sessionQuery = sessionQuery.where('branches.id', branch_id);
+  if (teacher_id) sessionQuery = sessionQuery.where('schedule_sessions.teacher_id', teacher_id);
+  if (room_id) sessionQuery = sessionQuery.where('schedule_sessions.room_id', room_id);
+  if (course_id) sessionQuery = sessionQuery.where('schedules.course_id', course_id);
+
+  // Branch permission check
+  if (req.user.role !== 'owner') {
+    sessionQuery = sessionQuery.where('branches.id', req.user.branch_id);
+  }
+
+  let sessions = await sessionQuery
+    .orderBy('schedule_sessions.session_date', 'asc')
+    .orderBy('schedule_sessions.start_time', 'asc');
+
+  // Filter teacher data based on user role
+  sessions = sessions.map(session => {
+    if (req.user.role === 'owner' || req.user.role === 'admin') {
+      return session;
+    } else {
+      // Teachers see limited information
+      return {
+        ...session,
+        teacher_phone: undefined,
+        teacher_email: undefined
+      };
+    }
+  });
+
+  // Get student information if requested
+  let studentsData = {};
+  if (include_students === 'true') {
+    const scheduleIds = [...new Set(sessions.map(s => s.schedule_id))];
+
+    if (scheduleIds.length > 0) {
+      const students = await db('schedule_students')
+        .join('students', 'schedule_students.student_id', 'students.id')
+        .join('users', 'students.user_id', 'users.id')
+        .select(
+          'schedule_students.schedule_id',
+          'students.*',
+          'users.email',
+          'users.phone',
+          'users.line_id',
+          'schedule_students.enrollment_date',
+          'schedule_students.status as enrollment_status'
+        )
+        .whereIn('schedule_students.schedule_id', scheduleIds)
+        .where('schedule_students.status', 'active')
+        .orderBy('students.first_name', 'asc');
+
+      // Filter student data based on user role and group by schedule
+      students.forEach(student => {
+        const studentData = req.user.role === 'owner' || req.user.role === 'admin'
+          ? student
+          : {
+            id: student.id,
+            first_name: student.first_name,
+            last_name: student.last_name,
+            nickname: student.nickname,
+            date_of_birth: student.date_of_birth,
+            school: student.school,
+            enrollment_status: student.enrollment_status
+          };
+
+        if (!studentsData[student.schedule_id]) {
+          studentsData[student.schedule_id] = [];
+        }
+        studentsData[student.schedule_id].push(studentData);
+      });
+    }
+  }
+
+  // Get holidays if requested
+  let holidays = [];
+  if (include_holidays === 'true') {
+    const years = [];
+    const startYear = startDate.getFullYear() + 543; // Convert to Buddhist year
+    const endYear = endDate.getFullYear() + 543;
+
+    for (let year = startYear; year <= endYear; year++) {
+      years.push(year);
+    }
+
+    holidays = await getHolidays(years);
+    // Filter holidays within date range
+    holidays = holidays.filter(holiday => {
+      return holiday.date >= startDateStr && holiday.date <= endDateStr;
+    });
+  }
+
+  // Get exceptions for the period
+  const scheduleIds = [...new Set(sessions.map(s => s.schedule_id))];
+  let exceptions = [];
+
+  if (scheduleIds.length > 0) {
+    exceptions = await db('schedule_exceptions')
+      .leftJoin('teachers', 'schedule_exceptions.new_teacher_id', 'teachers.id')
+      .leftJoin('rooms', 'schedule_exceptions.new_room_id', 'rooms.id')
+      .select(
+        'schedule_exceptions.*',
+        'teachers.first_name as new_teacher_first_name',
+        'teachers.last_name as new_teacher_last_name',
+        'rooms.room_name as new_room_name'
+      )
+      .whereIn('schedule_exceptions.schedule_id', scheduleIds)
+      .whereBetween('schedule_exceptions.exception_date', [startDateStr, endDateStr])
+      .where('schedule_exceptions.status', 'approved')
+      .orderBy('exception_date', 'asc');
+  }
+
+  // Organize data by date
+  const calendar = {};
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    const dateStr = currentDate.toISOString().split('T')[0];
+    const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+    // Find holiday for this date
+    const holidayInfo = holidays.find(h => h.date === dateStr);
+
+    // Find sessions for this date
+    const daySessions = sessions.filter(s =>
+      s.session_date.toISOString().split('T')[0] === dateStr
+    );
+
+    // Find exceptions for this date
+    const dayExceptions = exceptions.filter(e => e.exception_date === dateStr);
+
+    // Add student data to sessions if requested
+    if (include_students === 'true') {
+      daySessions.forEach(session => {
+        session.students = studentsData[session.schedule_id] || [];
+      });
+    }
+
+    calendar[dateStr] = {
+      date: dateStr,
+      day_of_week: dayName,
+      is_holiday: !!holidayInfo,
+      holiday_info: holidayInfo || null,
+      sessions: daySessions,
+      exceptions: dayExceptions,
+      session_count: daySessions.length,
+      branch_distribution: daySessions.reduce((acc, session) => {
+        const branchName = session.branch_name;
+        acc[branchName] = (acc[branchName] || 0) + 1;
+        return acc;
+      }, {})
+    };
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  // Calculate summary statistics
+  const totalSessions = sessions.length;
+  const totalHolidays = holidays.length;
+  const totalExceptions = exceptions.length;
+  const branchStats = sessions.reduce((acc, session) => {
+    const branchName = session.branch_name;
+    acc[branchName] = (acc[branchName] || 0) + 1;
+    return acc;
+  }, {});
+
+  const teacherStats = sessions.reduce((acc, session) => {
+    const teacherName = `${session.teacher_first_name} ${session.teacher_last_name}`;
+    acc[teacherName] = (acc[teacherName] || 0) + 1;
+    return acc;
+  }, {});
+
+  res.json({
+    success: true,
+    data: {
+      view: view,
+      period: {
+        start_date: startDateStr,
+        end_date: endDateStr,
+        total_days: Object.keys(calendar).length
+      },
+      calendar: calendar,
+      holidays: holidays,
+      summary: {
+        total_sessions: totalSessions,
+        total_holidays: totalHolidays,
+        total_exceptions: totalExceptions,
+        sessions_by_status: {
+          scheduled: sessions.filter(s => s.status === 'scheduled').length,
+          completed: sessions.filter(s => s.status === 'completed').length,
+          cancelled: sessions.filter(s => s.status === 'cancelled').length
+        },
+        sessions_by_branch: branchStats,
+        sessions_by_teacher: teacherStats,
+        days_with_sessions: Object.values(calendar).filter(day => day.session_count > 0).length,
+        days_with_holidays: Object.values(calendar).filter(day => day.is_holiday).length
+      }
+    }
+  });
+});
+
 
 module.exports = {
   createSchedule,
@@ -1731,10 +3193,18 @@ module.exports = {
   removeStudentFromSchedule,
   getScheduleStudents,
   createScheduleException,
+  createScheduleExceptionBySession,
   createMakeupSession,
   getMakeupSessions,
   handleStudentLeave,
   handleCourseDrop,
   getScheduleSessions,
   getWeeklySchedule,
+  getScheduleCalendar,
+  applyExistingExceptions,
+  addSessionComment,
+  getSessionComments,
+  updateSessionComment,
+  deleteSessionComment,
+  editSession,
 };

@@ -11,7 +11,8 @@ const getRooms = asyncHandler(async (req, res) => {
     .join('branches', 'rooms.branch_id', 'branches.id')
     .select(
       'rooms.*',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     );
 
@@ -59,7 +60,8 @@ const getRoomAvailability = asyncHandler(async (req, res) => {
     .join('branches', 'rooms.branch_id', 'branches.id')
     .select(
       'rooms.*',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('rooms.status', 'available');
@@ -136,8 +138,8 @@ const getRoomSuggestions = asyncHandler(async (req, res) => {
   let roomsQuery = db('rooms')
     .join('branches', 'rooms.branch_id', 'branches.id')
     .select(
-      'rooms.*',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('rooms.status', 'available')
@@ -250,7 +252,8 @@ const createRoom = asyncHandler(async (req, res) => {
     .join('branches', 'rooms.branch_id', 'branches.id')
     .select(
       'rooms.*',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('rooms.id', roomId)
@@ -324,7 +327,8 @@ const updateRoom = asyncHandler(async (req, res) => {
     .join('branches', 'rooms.branch_id', 'branches.id')
     .select(
       'rooms.*',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('rooms.id', id)

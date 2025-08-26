@@ -194,7 +194,8 @@ const revertLeavePolicyChange = asyncHandler(async (req, res) => {
       .join('branches', 'leave_policy_rules.branch_id', 'branches.id')
       .select(
         'leave_policy_rules.*',
-        'branches.name as branch_name'
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th'
       )
       .where('leave_policy_rules.id', policyRuleId)
       .first();

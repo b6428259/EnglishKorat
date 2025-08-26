@@ -1,7 +1,97 @@
 
+// @desc    Update teacher avatar
+// @route   PUT /api/v1/teachers/:id/avatar
+// @access  Private (Admin, Owner, Teacher themselves)
+const { S3_BUCKET } = require('../config/upload');
+const { s3 } = require('../utils/s3');
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { processAny } = require('../utils/DocumentManager');
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
 const { safeJsonParse } = require('../utils/safeJson');
+
+// @desc    Delete teacher
+// @route   DELETE /api/v1/teachers/:id
+// @access  Private (Admin, Owner)
+const deleteTeacher = asyncHandler(async (req, res) => {
+	const { id } = req.params;
+
+	// Get teacher and user
+	const teacher = await db('teachers')
+		.join('users', 'teachers.user_id', 'users.id')
+		.select('teachers.id', 'teachers.user_id', 'users.avatar', 'users.branch_id')
+		.where('teachers.id', id)
+		.first();
+
+	if (!teacher) {
+		return res.status(404).json({ success: false, message: 'Teacher not found' });
+	}
+
+	// Check permissions
+	if (req.user.role !== 'owner' && teacher.branch_id !== req.user.branch_id) {
+		return res.status(403).json({ success: false, message: 'Access denied. Cannot access other branch data.' });
+	}
+
+	// ลบ avatar ใน S3 ถ้ามี
+	if (teacher.avatar) {
+		try {
+			await s3.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: teacher.avatar }));
+		} catch (err) {
+			// ไม่ต้อง throw error ถ้าลบไม่ได้
+		}
+	}
+
+	// ลบข้อมูลใน users และ teachers
+	await db('teachers').where('id', id).del();
+	await db('users').where('id', teacher.user_id).del();
+
+	res.json({ success: true, message: 'Teacher deleted' });
+});
+
+const updateTeacherAvatar = asyncHandler(async (req, res) => {
+	const { id } = req.params;
+
+	// Get teacher and user
+	const teacher = await db('teachers')
+		.join('users', 'teachers.user_id', 'users.id')
+		.select('teachers.*', 'users.id as user_id', 'users.avatar', 'users.branch_id')
+		.where('teachers.id', id)
+		.first();
+
+	if (!teacher) {
+		return res.status(404).json({ success: false, message: 'Teacher not found' });
+	}
+
+	// Check permissions
+	if (req.user.role === 'teacher' && teacher.user_id !== req.user.id) {
+		return res.status(403).json({ success: false, message: 'Access denied' });
+	}
+	if (req.user.role !== 'owner' && teacher.branch_id !== req.user.branch_id) {
+		return res.status(403).json({ success: false, message: 'Access denied. Cannot access other branch data.' });
+	}
+
+	if (!req.file) {
+		return res.status(400).json({ success: false, message: 'No avatar file uploaded' });
+	}
+
+	// ลบ avatar เดิมถ้ามี
+	if (teacher.avatar) {
+		try {
+			await s3.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: teacher.avatar }));
+		} catch (err) {
+			// ไม่ต้อง throw error ถ้าลบไม่ได้
+		}
+	}
+
+	// อัปโหลด avatar ใหม่
+	const avatarResult = await processAny(req.file, `avatars/${teacher.user_id}`);
+	const avatarKey = avatarResult.variants.find(v => v.variant === 'original')?.key;
+	await db('users').where('id', teacher.user_id).update({ avatar: avatarKey });
+
+	res.json({ success: true, message: 'Avatar updated', data: { avatar: avatarKey } });
+});
+
+
 
 // @desc    Register a new teacher
 // @route   POST /api/v1/teachers/register
@@ -87,6 +177,7 @@ const getTeachers = asyncHandler(async (req, res) => {
 
 	let query = db('teachers')
 		.join('users', 'teachers.user_id', 'users.id')
+		.join('branches', 'users.branch_id', 'branches.id')
 		.select(
 			'teachers.id',
 			'teachers.first_name',
@@ -104,7 +195,9 @@ const getTeachers = asyncHandler(async (req, res) => {
 			'users.line_id',
 			'users.status',
 			'users.branch_id',
-            'users.avatar',
+			'branches.name_en as branch_name_en',
+			'branches.name_th as branch_name_th',
+			'users.avatar',
 			'teachers.created_at'
 		);
 
@@ -178,6 +271,7 @@ const getTeacher = asyncHandler(async (req, res) => {
 
 	let query = db('teachers')
 		.join('users', 'teachers.user_id', 'users.id')
+		.leftJoin('branches', 'users.branch_id', 'branches.id')
 		.select(
 			'teachers.*',
 			'users.username',
@@ -187,6 +281,8 @@ const getTeacher = asyncHandler(async (req, res) => {
 			'users.status',
 			'users.branch_id',
 			'users.avatar',
+			'branches.name_en as branch_name_en',
+			'branches.name_th as branch_name_th'
 		)
 		.where('teachers.id', id);
 
@@ -292,5 +388,7 @@ module.exports = {
 	registerTeacher,
 	getTeachers,
 	getTeacher,
-	updateTeacher
+	updateTeacher,
+	updateTeacherAvatar,
+	deleteTeacher
 };

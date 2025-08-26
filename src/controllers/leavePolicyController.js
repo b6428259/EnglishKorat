@@ -166,7 +166,8 @@ const createLeavePolicyRule = asyncHandler(async (req, res) => {
       .join('users', 'leave_policy_rules.created_by', 'users.id')
       .select(
         'leave_policy_rules.*',
-        'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
         'users.username as created_by_username'
       )
       .where('leave_policy_rules.id', ruleId)
@@ -335,7 +336,8 @@ const updateLeavePolicyRule = asyncHandler(async (req, res) => {
       .join('users', 'leave_policy_rules.created_by', 'users.id')
       .select(
         'leave_policy_rules.*',
-        'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
         'users.username as created_by_username'
       )
       .where('leave_policy_rules.id', id)
@@ -369,7 +371,8 @@ const getLeavePolicyRules = asyncHandler(async (req, res) => {
     .join('users', 'leave_policy_rules.created_by', 'users.id')
     .select(
       'leave_policy_rules.*',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'users.username as created_by_username'
     );
 
@@ -430,7 +433,8 @@ const getLeavePolicyRuleById = asyncHandler(async (req, res) => {
     .join('users', 'leave_policy_rules.created_by', 'users.id')
     .select(
       'leave_policy_rules.*',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'users.username as created_by_username'
     )
     .where('leave_policy_rules.id', id)

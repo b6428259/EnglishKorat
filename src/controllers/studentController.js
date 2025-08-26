@@ -181,7 +181,8 @@ const registerStudent = asyncHandler(async (req, res) => {
       'users.email',
       'users.phone',
       'users.line_id',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('students.id', result.studentId)
@@ -229,7 +230,8 @@ const getStudents = asyncHandler(async (req, res) => {
       'users.phone',
       'users.line_id',
       'users.status',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code',
       'students.created_at'
     );
@@ -316,7 +318,8 @@ const getStudent = asyncHandler(async (req, res) => {
       'users.phone',
       'users.line_id',
       'users.status',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('students.id', id);
@@ -427,7 +430,8 @@ const updateStudent = asyncHandler(async (req, res) => {
       'users.phone',
       'users.line_id',
       'users.status',
-      'branches.name as branch_name',
+         'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('students.id', id)
@@ -537,7 +541,8 @@ const updateStudentTestResults = asyncHandler(async (req, res) => {
       'users.phone',
       'users.line_id',
       'users.status',
-      'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('students.id', id)

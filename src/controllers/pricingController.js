@@ -79,6 +79,8 @@ const getPricingMatrix = asyncHandler(async (req, res) => {
       pricingOptions,
       summary
     }
+
+    
   });
 });
 

@@ -188,7 +188,8 @@ const enrollStudent = asyncHandler(async (req, res) => {
         'courses.code as course_code',
         'courses.course_type',
         'courses.uses_dynamic_pricing',
-        'branches.name as branch_name',
+        'branches.name_en as branch_name_en',
+        'branches.name_th as branch_name_th',
         'users.phone',
         'users.email',
         'enrollment_pricing.group_size_at_enrollment',
@@ -255,7 +256,8 @@ const getEnrollments = asyncHandler(async (req, res) => {
       'courses.name as course_name',
       'courses.code as course_code',
       'courses.course_type',
-      'branches.name as branch_name',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
       'users.phone',
       'users.email'
     );
@@ -365,7 +367,8 @@ const getStudentEnrollments = asyncHandler(async (req, res) => {
       'courses.code as course_code',
       'courses.course_type',
       'courses.hours_total',
-      'branches.name as branch_name'
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th'
     )
     .where('enrollments.student_id', student_id)
     .orderBy('enrollments.created_at', 'desc');
@@ -443,7 +446,8 @@ const updateEnrollment = asyncHandler(async (req, res) => {
       'courses.name as course_name',
       'courses.code as course_code',
       'courses.course_type',
-      'branches.name as branch_name',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
       'users.phone',
       'users.email'
     )

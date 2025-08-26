@@ -60,7 +60,8 @@ const createCourse = asyncHandler(async (req, res) => {
     .join('branches', 'courses.branch_id', 'branches.id')
     .select(
       'courses.*',
-      'branches.name as branch_name',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('courses.id', courseId)
@@ -87,7 +88,8 @@ const getCourses = asyncHandler(async (req, res) => {
     .join('branches', 'courses.branch_id', 'branches.id')
     .select(
       'courses.*',
-      'branches.name as branch_name',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     );
 
@@ -138,7 +140,8 @@ const getCourse = asyncHandler(async (req, res) => {
     .join('branches', 'courses.branch_id', 'branches.id')
     .select(
       'courses.*',
-      'branches.name as branch_name',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('courses.id', id);
@@ -232,7 +235,8 @@ const updateCourse = asyncHandler(async (req, res) => {
     .join('branches', 'courses.branch_id', 'branches.id')
     .select(
       'courses.*',
-      'branches.name as branch_name',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
       'branches.code as branch_code'
     )
     .where('courses.id', id)
