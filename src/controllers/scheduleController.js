@@ -1,6 +1,14 @@
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
 
+// Helper function to format date as YYYY-MM-DD in local timezone
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // @desc    Create new schedule with auto-generated sessions
 // @route   POST /api/v1/schedules
 // @access  Private (Admin, Owner)
@@ -74,7 +82,7 @@ const createSchedule = asyncHandler(async (req, res) => {
         sessions_per_week: sessionsPerWeek,
         max_students,
         start_date,
-        estimated_end_date: estimatedEndDate.toISOString().split('T')[0],
+        estimated_end_date: formatLocalDate(estimatedEndDate),
         status: 'active',
         auto_reschedule_holidays,
         notes: notes || null,
@@ -109,8 +117,6 @@ const createSchedule = asyncHandler(async (req, res) => {
         insertedTimeSlots,
         start_date,
         totalSessions,
-        teacher_id,
-        room_id,
         auto_reschedule_holidays
       );
 
@@ -144,10 +150,11 @@ const createSchedule = asyncHandler(async (req, res) => {
 });
 
 // Helper function to generate schedule sessions
-const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalSessions, teacherId, roomId, autoRescheduleHolidays) => {
+const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalSessions, autoRescheduleHolidays) => {
   const sessions = [];
   // คำนวณช่วงปี พ.ศ. ที่เกี่ยวข้อง
-  const start = new Date(startDate);
+  // Parse date as local date to avoid timezone issues
+  const start = new Date(startDate + 'T00:00:00');
   const years = [];
   const endEstimate = new Date(start);
   endEstimate.setDate(endEstimate.getDate() + Math.ceil(totalSessions / timeSlots.length) * 7);
@@ -157,95 +164,112 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
   const holidays = await getHolidays(years);
   let sessionNumber = 1;
   let weekNumber = 1;
-  let currentWeekStart = new Date(startDate);
-
-  // Find the Monday of the week containing start_date
-  const daysSinceMonday = (currentWeekStart.getDay() + 6) % 7;
-  currentWeekStart.setDate(currentWeekStart.getDate() - daysSinceMonday);
 
   const dayNumbers = {
     'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
     'thursday': 4, 'friday': 5, 'saturday': 6
   };
 
+  // Group time slots by day of week
+  const slotsByDay = {};
+  timeSlots.forEach(slot => {
+    if (!slotsByDay[slot.day_of_week]) {
+      slotsByDay[slot.day_of_week] = [];
+    }
+    slotsByDay[slot.day_of_week].push(slot);
+  });
+
+  // Generate sessions starting from the actual start_date
+  let currentDate = new Date(start);
+
   while (sessionNumber <= totalSessions) {
-    for (const timeSlot of timeSlots) {
-      if (sessionNumber > totalSessions) break;
+    const currentDayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
-      // Calculate session date
-      const targetDay = dayNumbers[timeSlot.day_of_week];
-      const sessionDate = new Date(currentWeekStart);
-      sessionDate.setDate(sessionDate.getDate() + targetDay);
+    // Check if there are sessions on this day
+    if (slotsByDay[currentDayName]) {
+      for (const timeSlot of slotsByDay[currentDayName]) {
+        if (sessionNumber > totalSessions) break;
 
-      const dateStr = sessionDate.toISOString().split('T')[0];
+        const dateStr = formatLocalDate(currentDate); // Format as YYYY-MM-DD in local timezone
 
-      // Check if it's a holiday
-      const isHoliday = holidays.some(h => h.date === dateStr);
+        // Check if it's a holiday
+        const isHoliday = holidays.some(h => h.date === dateStr);
 
-      let status = 'scheduled';
-      let notes = null;
+        let status = 'scheduled';
+        let notes = null;
 
-      if (isHoliday) {
-        const holiday = holidays.find(h => h.date === dateStr);
-        if (autoRescheduleHolidays) {
-          notes = `Originally scheduled on ${holiday.name} - to be rescheduled`;
-          status = 'cancelled';
-        } else {
-          status = 'cancelled';
-          notes = `Cancelled due to ${holiday.name}`;
+        if (isHoliday) {
+          const holiday = holidays.find(h => h.date === dateStr);
+          if (autoRescheduleHolidays) {
+            notes = `Originally scheduled on ${holiday.name} - to be rescheduled`;
+            status = 'cancelled';
+          } else {
+            status = 'cancelled';
+            notes = `Cancelled due to ${holiday.name}`;
+          }
         }
+
+        sessions.push({
+          schedule_id: scheduleId,
+          time_slot_id: timeSlot.id,
+          session_date: dateStr, // Use the formatted date string
+          session_number: sessionNumber,
+          week_number: weekNumber,
+          start_time: timeSlot.start_time,
+          end_time: timeSlot.end_time,
+          status,
+          notes,
+          is_makeup_session: false
+        });
+
+        sessionNumber++;
       }
-
-      sessions.push({
-        schedule_id: scheduleId,
-        time_slot_id: timeSlot.id,
-        session_date: dateStr,
-        session_number: sessionNumber,
-        week_number: weekNumber,
-        start_time: timeSlot.start_time,
-        end_time: timeSlot.end_time,
-        teacher_id: teacherId || null,
-        room_id: roomId || null,
-        status,
-        notes,
-        is_makeup_session: false
-      });
-
-      sessionNumber++;
     }
 
-    weekNumber++;
-    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+
+    // Update week number every 7 days
+    if (currentDate.getDay() === start.getDay()) {
+      weekNumber++;
+    }
   }
 
-  // Add makeup sessions for cancelled holidays
   if (autoRescheduleHolidays) {
     const cancelledSessions = sessions.filter(s => s.status === 'cancelled');
 
     for (const cancelled of cancelledSessions) {
       const timeSlot = timeSlots.find(ts => ts.id === cancelled.time_slot_id);
-      const targetDay = dayNumbers[timeSlot.day_of_week];
 
-      // Schedule makeup session 1 week after course ends
-      let makeupDate = new Date(currentWeekStart);
-      makeupDate.setDate(makeupDate.getDate() + targetDay);
+      let makeupDate = new Date(cancelled.session_date);
+      makeupDate.setDate(makeupDate.getDate() + 7);
+
+      while (true) {
+        const makeupDateStr = formatLocalDate(makeupDate);
+        const isHoliday = holidays.some(h => h.date === makeupDateStr);
+        const dayName = makeupDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+        if (!isHoliday && dayName === timeSlot.day_of_week) {
+          break;
+        }
+
+        makeupDate.setDate(makeupDate.getDate() + 1);
+      }
+
+      const makeupDateStr = formatLocalDate(makeupDate);
 
       sessions.push({
         schedule_id: scheduleId,
         time_slot_id: cancelled.time_slot_id,
-        session_date: makeupDate.toISOString().split('T')[0],
+        session_date: makeupDateStr,
         session_number: cancelled.session_number,
-        week_number: weekNumber,
+        week_number: cancelled.week_number,
         start_time: timeSlot.start_time,
         end_time: timeSlot.end_time,
-        teacher_id: teacherId || null,
-        room_id: roomId || null,
         status: 'scheduled',
         is_makeup_session: true,
-        notes: `Makeup session for ${cancelled.notes}`
+        notes: `Makeup session for ${cancelled.session_date} - ${cancelled.notes}`
       });
-
-      weekNumber++;
     }
   }
 
@@ -309,8 +333,8 @@ const getSchedules = asyncHandler(async (req, res) => {
       'teachers.first_name as teacher_first_name',
       'teachers.last_name as teacher_last_name',
       'rooms.room_name',
-        'branches.name_en as branch_name_en',
-        'branches.name_th as branch_name_th',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
     );
 
   // Apply filters
@@ -1073,12 +1097,12 @@ const editSession = asyncHandler(async (req, res) => {
 
   // Check for conflicts if changing teacher, room, or time
   if (teacher_id || room_id || start_time || end_time || session_date) {
-    const sessionDate = session_date || session.session_date.toISOString().split('T')[0];
+    const sessionDate = session_date || formatLocalDate(new Date(session.session_date));
     const dayOfWeek = new Date(sessionDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
     const conflicts = await checkSessionConflicts(
-      teacher_id || session.teacher_id,
-      room_id || session.room_id,
+      teacher_id || null,
+      room_id || null,
       dayOfWeek,
       start_time || session.start_time,
       end_time || session.end_time,
@@ -1101,8 +1125,6 @@ const editSession = asyncHandler(async (req, res) => {
   if (session_date !== undefined) updateData.session_date = session_date;
   if (start_time !== undefined) updateData.start_time = start_time;
   if (end_time !== undefined) updateData.end_time = end_time;
-  if (teacher_id !== undefined) updateData.teacher_id = teacher_id;
-  if (room_id !== undefined) updateData.room_id = room_id;
   if (status !== undefined) updateData.status = status;
   if (notes !== undefined) updateData.notes = notes;
 
@@ -1121,8 +1143,9 @@ const editSession = asyncHandler(async (req, res) => {
   // Get updated session with details
   const updatedSession = await db('schedule_sessions')
     .leftJoin('schedule_time_slots', 'schedule_sessions.time_slot_id', 'schedule_time_slots.id')
-    .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
-    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .leftJoin('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+    .leftJoin('teachers', 'schedules.teacher_id', 'teachers.id')
+    .leftJoin('rooms', 'schedules.room_id', 'rooms.id')
     .select(
       'schedule_sessions.*',
       'schedule_time_slots.day_of_week',
@@ -1133,8 +1156,21 @@ const editSession = asyncHandler(async (req, res) => {
     .where('schedule_sessions.id', sessionId)
     .first();
 
+  // Format dates in the response
+  if (updatedSession) {
+    if (updatedSession.session_date) {
+      updatedSession.session_date = formatLocalDate(new Date(updatedSession.session_date));
+    }
+    if (updatedSession.created_at) {
+      updatedSession.created_at = updatedSession.created_at.toISOString();
+    }
+    if (updatedSession.updated_at) {
+      updatedSession.updated_at = updatedSession.updated_at.toISOString();
+    }
+  }
+
   // Add comment for the change if significant fields were updated
-  const significantFields = ['session_date', 'start_time', 'end_time', 'teacher_id', 'room_id', 'status'];
+  const significantFields = ['session_date', 'start_time', 'end_time', 'status'];
   const changedFields = significantFields.filter(field => updateData[field] !== undefined);
 
   if (changedFields.length > 0) {
@@ -1168,14 +1204,14 @@ const checkSessionConflicts = async (teacherId, roomId, dayOfWeek, startTime, en
     let teacherQuery = db('schedule_sessions')
       .join('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
       .join('courses', 'schedules.course_id', 'courses.id')
-      .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+      .leftJoin('rooms', 'schedules.room_id', 'rooms.id')
       .select(
         'schedule_sessions.*',
         'schedules.schedule_name',
         'courses.name as course_name',
         'rooms.room_name'
       )
-      .where('schedule_sessions.teacher_id', teacherId)
+      .where('schedules.teacher_id', teacherId)
       .where('schedule_sessions.session_date', sessionDate)
       .where('schedule_sessions.status', '!=', 'cancelled')
       .where(function () {
@@ -1210,7 +1246,7 @@ const checkSessionConflicts = async (teacherId, roomId, dayOfWeek, startTime, en
     let roomQuery = db('schedule_sessions')
       .join('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
       .join('courses', 'schedules.course_id', 'courses.id')
-      .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
+      .leftJoin('teachers', 'schedules.teacher_id', 'teachers.id')
       .select(
         'schedule_sessions.*',
         'schedules.schedule_name',
@@ -1218,7 +1254,7 @@ const checkSessionConflicts = async (teacherId, roomId, dayOfWeek, startTime, en
         'teachers.first_name as teacher_first_name',
         'teachers.last_name as teacher_last_name'
       )
-      .where('schedule_sessions.room_id', roomId)
+      .where('schedules.room_id', roomId)
       .where('schedule_sessions.session_date', sessionDate)
       .where('schedule_sessions.status', '!=', 'cancelled')
       .where(function () {
@@ -1306,7 +1342,7 @@ const createScheduleExceptionBySession = asyncHandler(async (req, res) => {
   }
 
   // Extract date from session_date
-  const sessionDate = session.session_date.toISOString().split('T')[0];
+  const sessionDate = formatLocalDate(new Date(session.session_date));
 
   // Check if exception already exists for this date
   const existingException = await db('schedule_exceptions')
@@ -1359,32 +1395,26 @@ const createScheduleExceptionBySession = asyncHandler(async (req, res) => {
       };
       if (new_start_time) updateData.start_time = new_start_time;
       if (new_end_time) updateData.end_time = new_end_time;
-      if (new_teacher_id) updateData.teacher_id = new_teacher_id;
-      if (new_room_id) updateData.room_id = new_room_id;
 
       await trx('schedule_sessions')
         .where('id', session_id)
         .update(updateData);
 
     } else if (exception_type === 'teacher_change' && new_teacher_id) {
-      // Change teacher for the specific session
-      await trx('schedule_sessions')
-        .where('id', session_id)
-        .update({
-          teacher_id: new_teacher_id,
-          notes: `Teacher changed: ${reason}`,
-          updated_at: new Date()
-        });
+      // Change teacher for the specific session - Note: This will be ignored as teacher_id is now in schedules table
+      // You should update the teacher in the schedules table instead
+      return res.status(400).json({
+        success: false,
+        message: 'Teacher changes should be made at the schedule level, not session level'
+      });
 
     } else if (exception_type === 'room_change' && new_room_id) {
-      // Change room for the specific session
-      await trx('schedule_sessions')
-        .where('id', session_id)
-        .update({
-          room_id: new_room_id,
-          notes: `Room changed: ${reason}`,
-          updated_at: new Date()
-        });
+      // Change room for the specific session - Note: This will be ignored as room_id is now in schedules table
+      // You should update the room in the schedules table instead
+      return res.status(400).json({
+        success: false,
+        message: 'Room changes should be made at the schedule level, not session level'
+      });
 
     } else if (exception_type === 'time_change' && (new_start_time || new_end_time)) {
       // Change time for the specific session
@@ -1419,8 +1449,9 @@ const createScheduleExceptionBySession = asyncHandler(async (req, res) => {
   // Get updated session details
   const updatedSession = await db('schedule_sessions')
     .leftJoin('schedule_time_slots', 'schedule_sessions.time_slot_id', 'schedule_time_slots.id')
-    .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
-    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .leftJoin('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+    .leftJoin('teachers', 'schedules.teacher_id', 'teachers.id')
+    .leftJoin('rooms', 'schedules.room_id', 'rooms.id')
     .select(
       'schedule_sessions.*',
       'schedule_time_slots.day_of_week',
@@ -1430,6 +1461,19 @@ const createScheduleExceptionBySession = asyncHandler(async (req, res) => {
     )
     .where('schedule_sessions.id', session_id)
     .first();
+
+  // Format dates in the response
+  if (updatedSession) {
+    if (updatedSession.session_date) {
+      updatedSession.session_date = formatLocalDate(new Date(updatedSession.session_date));
+    }
+    if (updatedSession.created_at) {
+      updatedSession.created_at = updatedSession.created_at.toISOString();
+    }
+    if (updatedSession.updated_at) {
+      updatedSession.updated_at = updatedSession.updated_at.toISOString();
+    }
+  }
 
   res.status(201).json({
     success: true,
@@ -1548,62 +1592,42 @@ const createScheduleException = asyncHandler(async (req, res) => {
     } else if (exception_type === 'reschedule' && new_date) {
       // Reschedule sessions to new date
       await trx.raw(`
-        UPDATE schedule_sessions 
-        SET 
+        UPDATE schedule_sessions
+        SET
           session_date = ?,
           start_time = COALESCE(?, start_time),
           end_time = COALESCE(?, end_time),
-          teacher_id = COALESCE(?, teacher_id),
-          room_id = COALESCE(?, room_id),
           notes = ?,
           updated_at = NOW()
-        WHERE 
-          schedule_id = ? AND 
+        WHERE
+          schedule_id = ? AND
           DATE(session_date) = ?
-      `, [new_date, new_start_time, new_end_time, new_teacher_id, new_room_id, `Rescheduled from ${exceptionDate}: ${reason}`, scheduleId, exceptionDate]);
+      `, [new_date, new_start_time, new_end_time, `Rescheduled from ${exceptionDate}: ${reason}`, scheduleId, exceptionDate]);
 
     } else if (exception_type === 'teacher_change' && new_teacher_id) {
-      // Change teacher for sessions on this date
-      await trx.raw(`
-        UPDATE schedule_sessions 
-        SET 
-          teacher_id = ?,
-          notes = ?,
-          updated_at = NOW()
-        WHERE 
-          schedule_id = ? AND 
-          DATE(session_date) = ?
-      `, [new_teacher_id, `Teacher changed: ${reason}`, scheduleId, exceptionDate]);
+      // Change teacher for sessions on this date - Note: This will be ignored as teacher_id is now in schedules table
+      // You should update the teacher in the schedules table instead
+      throw new Error('Teacher changes should be made at the schedule level, not session level');
 
     } else if (exception_type === 'room_change' && new_room_id) {
-      // Change room for sessions on this date
-      await trx.raw(`
-        UPDATE schedule_sessions 
-        SET 
-          room_id = ?,
-          notes = ?,
-          updated_at = NOW()
-        WHERE 
-          schedule_id = ? AND 
-          DATE(session_date) = ?
-      `, [new_room_id, `Room changed: ${reason}`, scheduleId, exceptionDate]);
+      // Change room for sessions on this date - Note: This will be ignored as room_id is now in schedules table
+      // You should update the room in the schedules table instead
+      throw new Error('Room changes should be made at the schedule level, not session level');
 
     } else if (exception_type === 'time_change' && (new_start_time || new_end_time)) {
       // Change time for sessions on this date
       await trx.raw(`
-        UPDATE schedule_sessions 
-        SET 
+        UPDATE schedule_sessions
+        SET
           start_time = COALESCE(?, start_time),
           end_time = COALESCE(?, end_time),
           notes = ?,
           updated_at = NOW()
-        WHERE 
-          schedule_id = ? AND 
+        WHERE
+          schedule_id = ? AND
           DATE(session_date) = ?
       `, [new_start_time, new_end_time, `Time changed: ${reason}`, scheduleId, exceptionDate]);
-    }
-
-    return insertedId;
+    }    return insertedId;
   });
 
   const exception = await db('schedule_exceptions')
@@ -1707,8 +1731,6 @@ const createMakeupSession = asyncHandler(async (req, res) => {
       week_number: originalSession.week_number,
       start_time: makeup_start_time,
       end_time: makeup_end_time,
-      teacher_id: teacher_id || originalSession.teacher_id,
-      room_id: room_id || originalSession.room_id,
       status: 'scheduled',
       makeup_for_session_id: original_session_id,
       is_makeup_session: true,
@@ -1723,8 +1745,9 @@ const createMakeupSession = asyncHandler(async (req, res) => {
   // Get created makeup session with details
   const makeupSession = await db('schedule_sessions')
     .leftJoin('schedule_time_slots', 'schedule_sessions.time_slot_id', 'schedule_time_slots.id')
-    .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
-    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .leftJoin('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+    .leftJoin('teachers', 'schedules.teacher_id', 'teachers.id')
+    .leftJoin('rooms', 'schedules.room_id', 'rooms.id')
     .select(
       'schedule_sessions.*',
       'schedule_time_slots.day_of_week',
@@ -1734,6 +1757,32 @@ const createMakeupSession = asyncHandler(async (req, res) => {
     )
     .where('schedule_sessions.id', makeupSessionId)
     .first();
+
+  // Format dates in the response
+  if (makeupSession) {
+    if (makeupSession.session_date) {
+      makeupSession.session_date = formatLocalDate(new Date(makeupSession.session_date));
+    }
+    if (makeupSession.created_at) {
+      makeupSession.created_at = makeupSession.created_at.toISOString();
+    }
+    if (makeupSession.updated_at) {
+      makeupSession.updated_at = makeupSession.updated_at.toISOString();
+    }
+  }
+
+  // Format dates in original session
+  if (originalSession) {
+    if (originalSession.session_date) {
+      originalSession.session_date = formatLocalDate(new Date(originalSession.session_date));
+    }
+    if (originalSession.created_at) {
+      originalSession.created_at = originalSession.created_at.toISOString();
+    }
+    if (originalSession.updated_at) {
+      originalSession.updated_at = originalSession.updated_at.toISOString();
+    }
+  }
 
   res.status(201).json({
     success: true,
@@ -2158,6 +2207,23 @@ const getMakeupSessions = asyncHandler(async (req, res) => {
     .limit(parseInt(limit))
     .offset(parseInt(offset));
 
+  // Format dates in makeup sessions
+  const formattedMakeupSessions = makeupSessions.map(session => {
+    if (session.session_date) {
+      session.session_date = formatLocalDate(new Date(session.session_date));
+    }
+    if (session.original_date) {
+      session.original_date = formatLocalDate(new Date(session.original_date));
+    }
+    if (session.created_at) {
+      session.created_at = session.created_at.toISOString();
+    }
+    if (session.updated_at) {
+      session.updated_at = session.updated_at.toISOString();
+    }
+    return session;
+  });
+
   res.json({
     success: true,
     data: {
@@ -2166,7 +2232,7 @@ const getMakeupSessions = asyncHandler(async (req, res) => {
         schedule_name: schedule.schedule_name,
         course_name: schedule.course_name
       },
-      makeup_sessions: makeupSessions,
+      makeup_sessions: formattedMakeupSessions,
       pagination: {
         current_page: parseInt(page),
         per_page: parseInt(limit),
@@ -2294,6 +2360,20 @@ const getScheduleSessions = asyncHandler(async (req, res) => {
     .orderBy('schedule_sessions.start_time', 'asc') // Secondary sort by start_time
     .limit(parseInt(limit))
     .offset(parseInt(offset));
+
+  // Format dates in sessions
+  sessions = sessions.map(session => {
+    if (session.session_date) {
+      session.session_date = formatLocalDate(new Date(session.session_date));
+    }
+    if (session.created_at) {
+      session.created_at = session.created_at.toISOString();
+    }
+    if (session.updated_at) {
+      session.updated_at = session.updated_at.toISOString();
+    }
+    return session;
+  });
 
   // Get students enrolled in this schedule with role-based filtering
   const students = await db('schedule_students')
@@ -2478,8 +2558,8 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
       'teachers.first_name as teacher_first_name',
       'teachers.last_name as teacher_last_name',
       'rooms.room_name',
-        'branches.name_en as branch_name_en',
-        'branches.name_th as branch_name_th',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
     )
     .where('schedules.status', status);
 
@@ -2498,8 +2578,28 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
 
   const schedules = await query.orderBy('schedules.day_of_week', 'asc').orderBy('schedules.start_time', 'asc');
 
+  // Format dates in schedules
+  const formattedSchedules = schedules.map(schedule => {
+    if (schedule.start_date) {
+      schedule.start_date = formatLocalDate(new Date(schedule.start_date));
+    }
+    if (schedule.estimated_end_date) {
+      schedule.estimated_end_date = formatLocalDate(new Date(schedule.estimated_end_date));
+    }
+    if (schedule.actual_end_date) {
+      schedule.actual_end_date = formatLocalDate(new Date(schedule.actual_end_date));
+    }
+    if (schedule.created_at) {
+      schedule.created_at = schedule.created_at.toISOString();
+    }
+    if (schedule.updated_at) {
+      schedule.updated_at = schedule.updated_at.toISOString();
+    }
+    return schedule;
+  });
+
   // Get student counts
-  const scheduleIds = schedules.map(s => s.id);
+  const scheduleIds = formattedSchedules.map(s => s.id);
   let studentCounts = {};
 
   if (scheduleIds.length > 0) {
@@ -2517,7 +2617,7 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
   }
 
   // Apply student count filters if specified
-  let filteredSchedules = schedules;
+  let filteredSchedules = formattedSchedules;
   if (min_students || max_students) {
     filteredSchedules = schedules.filter(schedule => {
       const currentStudents = studentCounts[schedule.id] || 0;
@@ -2533,6 +2633,7 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
     const weekEnd = new Date(week_start);
     weekEnd.setDate(weekEnd.getDate() + 6);
 
+    const scheduleIds = formattedSchedules.map(s => s.id);
     exceptions = await db('schedule_exceptions')
       .leftJoin('teachers', 'schedule_exceptions.new_teacher_id', 'teachers.id')
       .leftJoin('rooms', 'schedule_exceptions.new_room_id', 'rooms.id')
@@ -2543,7 +2644,7 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
         'rooms.room_name as new_room_name'
       )
       .whereIn('schedule_exceptions.schedule_id', scheduleIds)
-      .whereBetween('schedule_exceptions.exception_date', [week_start, weekEnd.toISOString().split('T')[0]])
+      .whereBetween('schedule_exceptions.exception_date', [week_start, formatLocalDate(weekEnd)])
       .where('schedule_exceptions.status', 'approved');
   }
 
@@ -2644,13 +2745,30 @@ const getScheduleWithDetails = async (scheduleId) => {
       'teachers.last_name as teacher_last_name',
       'rooms.room_name',
       'rooms.capacity as room_capacity',
-        'branches.name_en as branch_name_en',
-        'branches.name_th as branch_name_th',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
     )
     .where('schedules.id', scheduleId)
     .first();
 
   if (schedule) {
+    // Format dates as strings to prevent timezone conversion
+    if (schedule.start_date) {
+      schedule.start_date = formatLocalDate(new Date(schedule.start_date));
+    }
+    if (schedule.estimated_end_date) {
+      schedule.estimated_end_date = formatLocalDate(new Date(schedule.estimated_end_date));
+    }
+    if (schedule.actual_end_date) {
+      schedule.actual_end_date = formatLocalDate(new Date(schedule.actual_end_date));
+    }
+    if (schedule.created_at) {
+      schedule.created_at = schedule.created_at.toISOString();
+    }
+    if (schedule.updated_at) {
+      schedule.updated_at = schedule.updated_at.toISOString();
+    }
+
     // Get current students count
     const studentCount = await db('schedule_students')
       .where('schedule_id', scheduleId)
@@ -2949,8 +3067,8 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
       });
   }
 
-  const startDateStr = startDate.toISOString().split('T')[0];
-  const endDateStr = endDate.toISOString().split('T')[0];
+  const startDateStr = formatLocalDate(startDate);
+  const endDateStr = formatLocalDate(endDate);
 
   // Get all sessions within date range
   let sessionQuery = db('schedule_sessions')
@@ -2967,8 +3085,8 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
       'courses.name as course_name',
       'courses.code as course_code',
       'branches.id as branch_id',
-        'branches.name_en as branch_name_en',
-        'branches.name_th as branch_name_th',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th',
       'teachers.first_name as teacher_first_name',
       'teachers.last_name as teacher_last_name',
       'teachers.nationality as teacher_nationality',
@@ -2996,6 +3114,20 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
   let sessions = await sessionQuery
     .orderBy('schedule_sessions.session_date', 'asc')
     .orderBy('schedule_sessions.start_time', 'asc');
+
+  // Format dates in sessions
+  sessions = sessions.map(session => {
+    if (session.session_date) {
+      session.session_date = formatLocalDate(new Date(session.session_date));
+    }
+    if (session.created_at) {
+      session.created_at = session.created_at.toISOString();
+    }
+    if (session.updated_at) {
+      session.updated_at = session.updated_at.toISOString();
+    }
+    return session;
+  });
 
   // Filter teacher data based on user role
   sessions = sessions.map(session => {
@@ -3098,7 +3230,7 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
   const currentDate = new Date(startDate);
 
   while (currentDate <= endDate) {
-    const dateStr = currentDate.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(currentDate);
     const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
     // Find holiday for this date
@@ -3106,7 +3238,7 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
 
     // Find sessions for this date
     const daySessions = sessions.filter(s =>
-      s.session_date.toISOString().split('T')[0] === dateStr
+      formatLocalDate(new Date(s.session_date)) === dateStr
     );
 
     // Find exceptions for this date
@@ -3182,6 +3314,474 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get teacher schedules - all teachers or specific teacher
+// @route   GET /api/v1/schedules/teachers
+// @access  Private
+const getTeacherSchedules = asyncHandler(async (req, res) => {
+  const {
+    teacher_id,
+    branch_id,
+    date_filter = 'week', // day, week, month
+    date = formatLocalDate(new Date()), // YYYY-MM-DD
+    page = 1,
+    limit = 50
+  } = req.query;
+
+  const offset = (page - 1) * limit;
+
+  // Calculate date range based on filter
+  let startDate, endDate;
+  const filterDate = new Date(date);
+
+  switch (date_filter) {
+    case 'day':
+      startDate = endDate = date;
+      break;
+    case 'week':
+      // Get start of week (Monday)
+      const startOfWeek = new Date(filterDate);
+      startOfWeek.setDate(filterDate.getDate() - (filterDate.getDay() === 0 ? 6 : filterDate.getDay() - 1));
+      startDate = formatLocalDate(startOfWeek);
+
+      // Get end of week (Sunday)
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endDate = formatLocalDate(endOfWeek);
+      break;
+    case 'month':
+      // Get start of month
+      const startOfMonth = new Date(filterDate.getFullYear(), filterDate.getMonth(), 1);
+      startDate = formatLocalDate(startOfMonth);
+
+      // Get end of month
+      const endOfMonth = new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 0);
+      endDate = formatLocalDate(endOfMonth);
+      break;
+    default:
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid date_filter. Use: day, week, or month'
+      });
+  }
+
+  // Get all teachers based on filters
+  let teachersQuery = db('teachers')
+    .join('users as teacher_users', 'teachers.user_id', 'teacher_users.id')
+    .select(
+      'teachers.id as teacher_id',
+      'teachers.first_name',
+      'teachers.last_name',
+      'teachers.nickname',
+      'teacher_users.avatar'
+    )
+    .where('teacher_users.status', 'active');
+
+  if (teacher_id) {
+    teachersQuery = teachersQuery.where('teachers.id', teacher_id);
+  }
+
+  if (branch_id) {
+    teachersQuery = teachersQuery.where('teacher_users.branch_id', branch_id);
+  }
+
+  // Branch permission check for non-owners
+  if (req.user.role !== 'owner') {
+    teachersQuery = teachersQuery.where('teacher_users.branch_id', req.user.branch_id);
+  }
+
+  const allTeachers = await teachersQuery;
+
+  // Build base query for schedule sessions with teacher details
+  let query = db('schedule_sessions')
+    .join('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+    .join('courses', 'schedules.course_id', 'courses.id')
+    .leftJoin('teachers', 'schedule_sessions.teacher_id', 'teachers.id')
+    .leftJoin('users as teacher_users', 'teachers.user_id', 'teacher_users.id')
+    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .leftJoin('branches', 'courses.branch_id', 'branches.id')
+    .select(
+      'schedule_sessions.*',
+      'schedules.schedule_name',
+      'schedules.max_students',
+      'schedules.current_students',
+      'courses.name as course_name',
+      'courses.code as course_code',
+      'teachers.id as teacher_id',
+      'teachers.first_name as teacher_first_name',
+      'teachers.last_name as teacher_last_name',
+      'teachers.nickname as teacher_nickname',
+      'teacher_users.avatar as teacher_avatar',
+      'rooms.room_name',
+      'branches.id as branch_id',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th'
+    )
+    .whereRaw('DATE(schedule_sessions.session_date) BETWEEN ? AND ?', [startDate, endDate])
+    .whereIn('schedule_sessions.status', ['scheduled', 'confirmed', 'in_progress']);
+
+  // Apply filters
+  if (teacher_id) {
+    query = query.where('schedule_sessions.teacher_id', teacher_id);
+  }
+
+  if (branch_id) {
+    query = query.where('courses.branch_id', branch_id);
+  }
+
+  // Branch permission check for non-owners
+  if (req.user.role !== 'owner') {
+    query = query.where('courses.branch_id', req.user.branch_id);
+  }
+
+  // Get all sessions (without pagination)
+  const sessions = await query
+    .orderBy('schedule_sessions.session_date', 'asc')
+    .orderBy('schedule_sessions.start_time', 'asc');
+
+  // Format dates in sessions
+  const formattedSessions = sessions.map(session => {
+    if (session.session_date) {
+      session.session_date = formatLocalDate(new Date(session.session_date));
+    }
+    if (session.created_at) {
+      session.created_at = session.created_at.toISOString();
+    }
+    if (session.updated_at) {
+      session.updated_at = session.updated_at.toISOString();
+    }
+    return session;
+  });
+
+  // Group sessions by teacher for better organization
+  const groupedByTeacher = formattedSessions.reduce((acc, session) => {
+    const teacherKey = session.teacher_id || 'unassigned';
+
+    if (!acc[teacherKey]) {
+      acc[teacherKey] = {
+        teacher_id: session.teacher_id,
+        teacher_name: session.teacher_first_name && session.teacher_last_name
+          ? `${session.teacher_first_name} ${session.teacher_last_name}`
+          : 'Unassigned',
+        teacher_nickname: session.teacher_nickname,
+        teacher_avatar: session.teacher_avatar,
+        sessions: []
+      };
+    }
+
+    acc[teacherKey].sessions.push({
+      session_id: session.id,
+      schedule_id: session.schedule_id,
+      schedule_name: session.schedule_name,
+      course_name: session.course_name,
+      course_code: session.course_code,
+      session_date: session.session_date,
+      start_time: session.start_time,
+      end_time: session.end_time,
+      session_number: session.session_number,
+      week_number: session.week_number,
+      status: session.status,
+      room_name: session.room_name,
+      max_students: session.max_students,
+      current_students: session.current_students,
+      branch_id: session.branch_id,
+      branch_name_en: session.branch_name_en,
+      branch_name_th: session.branch_name_th,
+      notes: session.notes
+    });
+
+    return acc;
+  }, {});
+
+  // Add teachers without sessions
+  allTeachers.forEach(teacher => {
+    const teacherKey = teacher.teacher_id;
+    if (!groupedByTeacher[teacherKey]) {
+      groupedByTeacher[teacherKey] = {
+        teacher_id: teacher.teacher_id,
+        teacher_name: teacher.first_name && teacher.last_name
+          ? `${teacher.first_name} ${teacher.last_name}`
+          : 'Unassigned',
+        teacher_nickname: teacher.nickname,
+        teacher_avatar: teacher.avatar,
+        sessions: []
+      };
+    }
+  });
+
+  // Convert to array and sort by teacher name
+  let teacherSchedules = Object.values(groupedByTeacher).sort((a, b) => {
+    if (a.teacher_name === 'Unassigned') return 1;
+    if (b.teacher_name === 'Unassigned') return -1;
+    return a.teacher_name.localeCompare(b.teacher_name);
+  });
+
+  // Apply pagination to teachers
+  const totalTeachers = teacherSchedules.length;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + parseInt(limit);
+  teacherSchedules = teacherSchedules.slice(startIndex, endIndex);
+
+  res.json({
+    success: true,
+    data: {
+      teachers: teacherSchedules,
+      filter_info: {
+        date_filter,
+        start_date: startDate,
+        end_date: endDate,
+        total_sessions: formattedSessions.length
+      },
+      pagination: {
+        current_page: parseInt(page),
+        per_page: parseInt(limit),
+        total: totalTeachers,
+        total_pages: Math.ceil(totalTeachers / limit)
+      }
+    }
+  });
+});
+
+// @desc    Get specific teacher's schedule
+// @route   GET /api/v1/schedules/teachers/:teacher_id
+// @access  Private
+const getTeacherSchedule = asyncHandler(async (req, res) => {
+  const { teacher_id } = req.params;
+  const {
+    branch_id,
+    date_filter = 'week',
+    date = formatLocalDate(new Date()),
+    include_students = 'false',
+    page = 1,
+    limit = 50
+  } = req.query;
+
+  const offset = (page - 1) * limit;
+
+  // Check if teacher exists
+  const teacher = await db('teachers')
+    .join('users', 'teachers.user_id', 'users.id')
+    .select(
+      'teachers.*',
+      'users.avatar',
+      'users.branch_id',
+      'users.email',
+      'users.phone'
+    )
+    .where('teachers.id', teacher_id)
+    .first();
+
+  if (!teacher) {
+    return res.status(404).json({
+      success: false,
+      message: 'Teacher not found'
+    });
+  }
+
+  // Check permissions
+  if (req.user.role !== 'owner' && teacher.branch_id !== req.user.branch_id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Cannot access other branch teacher data.'
+    });
+  }
+
+  // Calculate date range
+  let startDate, endDate;
+  const filterDate = new Date(date);
+
+  switch (date_filter) {
+    case 'day':
+      startDate = endDate = date;
+      break;
+    case 'week':
+      const startOfWeek = new Date(filterDate);
+      startOfWeek.setDate(filterDate.getDate() - (filterDate.getDay() === 0 ? 6 : filterDate.getDay() - 1));
+      startDate = formatLocalDate(startOfWeek);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endDate = formatLocalDate(endOfWeek);
+      break;
+    case 'month':
+      const startOfMonth = new Date(filterDate.getFullYear(), filterDate.getMonth(), 1);
+      startDate = formatLocalDate(startOfMonth);
+
+      const endOfMonth = new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 0);
+      endDate = formatLocalDate(endOfMonth);
+      break;
+    default:
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid date_filter. Use: day, week, or month'
+      });
+  }
+
+  // Get teacher's sessions
+  let query = db('schedule_sessions')
+    .join('schedules', 'schedule_sessions.schedule_id', 'schedules.id')
+    .join('courses', 'schedules.course_id', 'courses.id')
+    .leftJoin('rooms', 'schedule_sessions.room_id', 'rooms.id')
+    .leftJoin('branches', 'courses.branch_id', 'branches.id')
+    .select(
+      'schedule_sessions.*',
+      'schedules.schedule_name',
+      'schedules.max_students',
+      'schedules.current_students',
+      'courses.name as course_name',
+      'courses.code as course_code',
+      'rooms.room_name',
+      'branches.id as branch_id',
+      'branches.name_en as branch_name_en',
+      'branches.name_th as branch_name_th'
+    )
+    .where('schedule_sessions.teacher_id', teacher_id)
+    .whereBetween('schedule_sessions.session_date', [startDate, endDate]);
+
+  // Apply branch filter if specified
+  if (branch_id) {
+    query = query.where('courses.branch_id', branch_id);
+  }
+
+  // Branch permission check for non-owners
+  if (req.user.role !== 'owner') {
+    query = query.where('courses.branch_id', req.user.branch_id);
+  }
+
+  // Get total count
+  const totalQuery = query.clone().count('* as total');
+  const [{ total }] = await totalQuery;
+
+  // Get paginated sessions
+  const sessions = await query
+    .orderBy('schedule_sessions.session_date', 'asc')
+    .orderBy('schedule_sessions.start_time', 'asc')
+    .limit(parseInt(limit))
+    .offset(parseInt(offset));
+
+  // Format dates in sessions
+  const formattedSessions = sessions.map(session => {
+    if (session.session_date) {
+      session.session_date = formatLocalDate(new Date(session.session_date));
+    }
+    if (session.created_at) {
+      session.created_at = session.created_at.toISOString();
+    }
+    if (session.updated_at) {
+      session.updated_at = session.updated_at.toISOString();
+    }
+    return session;
+  });
+
+  // Include student information if requested
+  let sessionsWithStudents = formattedSessions;
+  if (include_students === 'true') {
+    const sessionIds = formattedSessions.map(s => s.id);
+
+    if (sessionIds.length > 0) {
+      // Get students for each session via schedule_students
+      const students = await db('schedule_students')
+        .join('students', 'schedule_students.student_id', 'students.id')
+        .join('users', 'students.user_id', 'users.id')
+        .select(
+          'schedule_students.schedule_id',
+          'students.id as student_id',
+          'students.first_name',
+          'students.last_name',
+          'students.nickname',
+          'students.cefr_level',
+          'users.avatar as student_avatar'
+        )
+        .whereIn('schedule_students.schedule_id', sessions.map(s => s.schedule_id))
+        .where('schedule_students.status', 'active');
+
+      // Group students by schedule_id
+      const studentsBySchedule = students.reduce((acc, student) => {
+        if (!acc[student.schedule_id]) {
+          acc[student.schedule_id] = [];
+        }
+        acc[student.schedule_id].push({
+          student_id: student.student_id,
+          first_name: student.first_name,
+          last_name: student.last_name,
+          nickname: student.nickname,
+          cefr_level: student.cefr_level,
+          avatar: student.student_avatar
+        });
+        return acc;
+      }, {});
+
+      // Add students to sessions
+      sessionsWithStudents = sessions.map(session => ({
+        ...session,
+        students: studentsBySchedule[session.schedule_id] || []
+      }));
+    }
+  }
+
+  // Group sessions by date for better organization
+  const sessionsByDate = sessionsWithStudents.reduce((acc, session) => {
+    const dateKey = formatLocalDate(new Date(session.session_date));
+
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+
+    acc[dateKey].push({
+      session_id: session.id,
+      schedule_id: session.schedule_id,
+      schedule_name: session.schedule_name,
+      course_name: session.course_name,
+      course_code: session.course_code,
+      start_time: session.start_time,
+      end_time: session.end_time,
+      session_number: session.session_number,
+      week_number: session.week_number,
+      status: session.status,
+      room_name: session.room_name,
+      max_students: session.max_students,
+      current_students: session.current_students,
+      branch_id: session.branch_id,
+      branch_name_en: session.branch_name_en,
+      branch_name_th: session.branch_name_th,
+      notes: session.notes,
+      students: session.students || []
+    });
+
+    return acc;
+  }, {});
+
+  res.json({
+    success: true,
+    data: {
+      teacher: {
+        id: teacher.id,
+        first_name: teacher.first_name,
+        last_name: teacher.last_name,
+        nickname: teacher.nickname,
+        avatar: teacher.avatar,
+        teacher_type: teacher.teacher_type,
+        specializations: teacher.specializations ? JSON.parse(teacher.specializations) : [],
+        branch_id: teacher.branch_id,
+        email: teacher.email,
+        phone: teacher.phone
+      },
+      sessions_by_date: sessionsByDate,
+      filter_info: {
+        date_filter,
+        start_date: startDate,
+        end_date: endDate,
+        total_sessions: parseInt(total)
+      },
+      pagination: {
+        current_page: parseInt(page),
+        per_page: parseInt(limit),
+        total: parseInt(total),
+        total_pages: Math.ceil(total / limit)
+      }
+    }
+  });
+});
+
 
 module.exports = {
   createSchedule,
@@ -3207,4 +3807,6 @@ module.exports = {
   updateSessionComment,
   deleteSessionComment,
   editSession,
+  getTeacherSchedules,
+  getTeacherSchedule
 };

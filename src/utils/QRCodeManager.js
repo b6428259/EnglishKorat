@@ -6,6 +6,14 @@
 const crypto = require('crypto');
 const { qrCodeConfig, fileNaming } = require('../config/upload');
 
+// Helper function to format dates in local timezone
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 class QRCodeManager {
   constructor() {
     this.config = qrCodeConfig;
@@ -14,7 +22,7 @@ class QRCodeManager {
   // Generate QR code data for a class session
   generateQRData(classId, sessionDate, teacherId) {
     const timestamp = Date.now();
-    const dateString = sessionDate.toISOString().split('T')[0];
+    const dateString = formatLocalDate(new Date(sessionDate));
     
     // Create unique QR code data
     const qrData = {

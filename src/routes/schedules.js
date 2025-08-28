@@ -25,6 +25,8 @@ const {
   updateSessionComment,
   deleteSessionComment,
   editSession,
+  getTeacherSchedules,
+  getTeacherSchedule
 } = require('../controllers/scheduleController');
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const { validateConflictCheck } = require('../middleware/validationMiddleware');
@@ -40,6 +42,16 @@ router.post('/', authMiddleware, authorize('admin', 'owner'), createSchedule);
 // @desc    Get schedules with filtering
 // @access  Private
 router.get('/', authMiddleware, getSchedules);
+
+// @route   GET /api/v1/schedules/teachers
+// @desc    Get teacher schedules (all teachers or filtered)
+// @access  Private
+router.get('/teachers', authMiddleware, getTeacherSchedules);
+
+// @route   GET /api/v1/schedules/teachers/:teacher_id
+// @desc    Get specific teacher's schedule
+// @access  Private
+router.get('/teachers/:teacher_id', authMiddleware, getTeacherSchedule);
 
 // @route   GET /api/v1/schedules/weekly
 // @desc    Get weekly schedule view
