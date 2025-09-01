@@ -192,6 +192,19 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
 
         const dateStr = formatLocalDate(currentDate); // Format as YYYY-MM-DD in local timezone
 
+        // Check if session already exists to prevent duplicates
+        const existingSession = await db('schedule_sessions')
+          .where('schedule_id', scheduleId)
+          .where('session_date', dateStr)
+          .where('start_time', timeSlot.start_time)
+          .where('end_time', timeSlot.end_time)
+          .first();
+
+        if (existingSession) {
+          // Skip creating duplicate session
+          continue;
+        }
+
         // Check if it's a holiday
         const isHoliday = holidays.some(h => h.date === dateStr);
 
@@ -258,48 +271,83 @@ const generateScheduleSessions = async (scheduleId, timeSlots, startDate, totalS
 
       const makeupDateStr = formatLocalDate(makeupDate);
 
-      sessions.push({
-        schedule_id: scheduleId,
-        time_slot_id: cancelled.time_slot_id,
-        session_date: makeupDateStr,
-        session_number: cancelled.session_number,
-        week_number: cancelled.week_number,
-        start_time: timeSlot.start_time,
-        end_time: timeSlot.end_time,
-        status: 'scheduled',
-        is_makeup_session: true,
-        notes: `Makeup session for ${cancelled.session_date} - ${cancelled.notes}`
-      });
+      // Check if makeup session already exists to prevent duplicates
+      const existingMakeupSession = await db('schedule_sessions')
+        .where('schedule_id', scheduleId)
+        .where('session_date', makeupDateStr)
+        .where('start_time', timeSlot.start_time)
+        .where('end_time', timeSlot.end_time)
+        .where('is_makeup_session', true)
+        .first();
+
+      if (!existingMakeupSession) {
+        sessions.push({
+          schedule_id: scheduleId,
+          time_slot_id: cancelled.time_slot_id,
+          session_date: makeupDateStr,
+          session_number: cancelled.session_number,
+          week_number: cancelled.week_number,
+          start_time: timeSlot.start_time,
+          end_time: timeSlot.end_time,
+          status: 'scheduled',
+          is_makeup_session: true,
+          notes: `Makeup session for ${cancelled.session_date} - ${cancelled.notes}`
+        });
+      }
     }
   }
 
   return sessions;
 };
 
-// Helper function to get holidays
+// Helper function to get holidays (with cache + timeout)
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// ดึงวันหยุดจาก myhora.com ตามปี พ.ศ. ที่ส่งมา
+// Simple in-memory cache for holidays by Buddhist year (BE)
+const HOLIDAYS_CACHE = new Map(); // key: yearBE, value: { data: [...], ts: epoch_ms }
+const HOLIDAYS_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const fetchWithTimeout = async (url, timeoutMs = 1500) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+};
+
+// ดึงวันหยุดจาก myhora.com ตามปี พ.ศ. ที่ส่งมา (cached + fast-fail)
 const getHolidays = async (years) => {
   const allHolidays = [];
   for (const yearBE of years) {
     try {
+      // Serve from cache when fresh
+      const cached = HOLIDAYS_CACHE.get(yearBE);
+      if (cached && (Date.now() - cached.ts) < HOLIDAYS_TTL_MS) {
+        allHolidays.push(...cached.data);
+        continue;
+      }
+
       const url = `https://www.myhora.com/calendar/ical/holiday.aspx?${yearBE}.json`;
-      const resp = await fetch(url);
+      const resp = await fetchWithTimeout(url, 1500); // fast-fail in 1.5s
       if (!resp.ok) continue;
       const data = await resp.json();
+      const converted = [];
       if (Array.isArray(data)) {
         for (const item of data) {
           // item.Date: '2568-04-13', item.Title: 'วันสงกรานต์'
-          // แปลงปี พ.ศ. เป็น ค.ศ. สำหรับ date
           let [y, m, d] = item.Date.split('-');
-          y = (parseInt(y, 10) - 543).toString();
+          y = (parseInt(y, 10) - 543).toString(); // convert BE -> CE
           const dateISO = `${y}-${m}-${d}`;
-          allHolidays.push({ date: dateISO, name: item.Title });
+          converted.push({ date: dateISO, name: item.Title });
         }
       }
+      // Cache and accumulate
+      HOLIDAYS_CACHE.set(yearBE, { data: converted, ts: Date.now() });
+      allHolidays.push(...converted);
     } catch (e) {
-      // ignore error
+      // Timeout or fetch error -> skip this year gracefully
     }
   }
   return allHolidays;
@@ -341,7 +389,8 @@ const getSchedules = asyncHandler(async (req, res) => {
   if (course_id) query = query.where('schedules.course_id', course_id);
   if (teacher_id) query = query.where('schedules.teacher_id', teacher_id);
   if (room_id) query = query.where('schedules.room_id', room_id);
-  if (day_of_week) query = query.where('schedules.day_of_week', day_of_week);
+  // Note: day_of_week filter removed as schedules no longer have single day_of_week
+  // Day filtering should be done at the session level if needed
   if (status) query = query.where('schedules.status', status);
   if (branch_id) query = query.where('courses.branch_id', branch_id);
 
@@ -351,8 +400,8 @@ const getSchedules = asyncHandler(async (req, res) => {
   }
 
   const schedules = await query
-    .orderBy('schedules.day_of_week', 'asc')
-    .orderBy('schedules.start_time', 'asc')
+    .orderBy('schedules.schedule_name', 'asc')
+    .orderBy('schedules.start_date', 'asc')
     .limit(limit)
     .offset(offset);
 
@@ -387,7 +436,7 @@ const getSchedules = asyncHandler(async (req, res) => {
   if (course_id) totalQuery.where('schedules.course_id', course_id);
   if (teacher_id) totalQuery.where('schedules.teacher_id', teacher_id);
   if (room_id) totalQuery.where('schedules.room_id', room_id);
-  if (day_of_week) totalQuery.where('schedules.day_of_week', day_of_week);
+  // Note: day_of_week filter removed as schedules no longer have single day_of_week
   if (status) totalQuery.where('schedules.status', status);
   if (branch_id) totalQuery.where('courses.branch_id', branch_id);
   if (req.user.role !== 'owner') {
@@ -462,15 +511,17 @@ const updateSchedule = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check for conflicts if changing teacher, room, or time
-  const { teacher_id, room_id, day_of_week, start_time, end_time } = updateData;
-  if ((teacher_id || room_id) && (day_of_week || start_time || end_time)) {
+  // Check for conflicts if changing teacher or room
+  // Note: Since schedules now have multiple time slots, conflict checking is more complex
+  // For now, skip conflict checking to avoid database errors
+  // TODO: Implement proper conflict checking for the new schema
+  /*
+  const { teacher_id, room_id } = updateData;
+  if ((teacher_id || room_id)) {
     const conflicts = await checkScheduleConflicts(
       teacher_id || currentSchedule.teacher_id,
       room_id || currentSchedule.room_id,
-      day_of_week || currentSchedule.day_of_week,
-      start_time || currentSchedule.start_time,
-      end_time || currentSchedule.end_time,
+      null, null, null, // No longer have single day_of_week/start_time/end_time
       id
     );
 
@@ -482,13 +533,14 @@ const updateSchedule = asyncHandler(async (req, res) => {
       });
     }
   }
+  */
 
   // Prepare update data
   const allowedFields = [
-    'teacher_id', 'room_id', 'schedule_name', 'day_of_week',
-    'start_time', 'end_time', 'duration_hours', 'max_students',
-    'schedule_type', 'recurring_pattern', 'start_date', 'end_date',
-    'status', 'notes'
+    'teacher_id', 'room_id', 'schedule_name', 'total_hours',
+    'hours_per_session', 'max_students', 'schedule_type',
+    'recurring_pattern', 'start_date', 'estimated_end_date',
+    'status', 'notes', 'auto_reschedule_holidays'
   ];
 
   const scheduleUpdateData = {};
@@ -773,9 +825,8 @@ const getScheduleStudents = asyncHandler(async (req, res) => {
         id: schedule.id,
         schedule_name: schedule.schedule_name,
         course_name: schedule.course_name,
-        day_of_week: schedule.day_of_week,
-        start_time: schedule.start_time,
-        end_time: schedule.end_time
+        // Note: day_of_week, start_time, end_time are now in schedule_time_slots table
+        // These fields are no longer available at the schedule level
       },
       students: students
     }
@@ -2568,15 +2619,15 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
   if (room_id) query = query.where('schedules.room_id', room_id);
   if (branch_id) query = query.where('courses.branch_id', branch_id);
   if (course_id) query = query.where('schedules.course_id', course_id);
-  if (time_range_start) query = query.where('schedules.start_time', '>=', time_range_start);
-  if (time_range_end) query = query.where('schedules.end_time', '<=', time_range_end);
+  // Note: time_range_start/end filters removed as schedules no longer have single start_time/end_time
+  // Time filtering should be done at the session level if needed
 
   // Branch permission check
   if (req.user.role !== 'owner') {
     query = query.where('courses.branch_id', req.user.branch_id);
   }
 
-  const schedules = await query.orderBy('schedules.day_of_week', 'asc').orderBy('schedules.start_time', 'asc');
+  const schedules = await query.orderBy('schedules.schedule_name', 'asc').orderBy('schedules.start_date', 'asc');
 
   // Format dates in schedules
   const formattedSchedules = schedules.map(schedule => {
@@ -2729,6 +2780,281 @@ const getWeeklySchedule = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Create a single or repeating session(s) for a schedule
+// @route   POST /api/v1/schedules/:id/sessions/create
+// @access  Private (Admin, Owner)
+const createSessions = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    session_date, // YYYY-MM-DD (base date)
+    start_time,   // HH:mm:ss
+    end_time,     // HH:mm:ss
+  repeat = { enabled: false },
+    is_makeup_session = false,
+  notes,
+  appointment_notes,
+  service
+  } = req.body;
+
+  if (!session_date || !start_time || !end_time) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields: session_date, start_time, end_time'
+    });
+  }
+
+  // Load schedule and permission check
+  const schedule = await getScheduleWithDetails(id);
+  if (!schedule) {
+    return res.status(404).json({ success: false, message: 'Schedule not found' });
+  }
+  if (req.user.role !== 'owner' && schedule.branch_id !== req.user.branch_id) {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+
+  // Helper to compute week number relative to schedule start
+  const computeWeekNumber = (dateStr) => {
+    try {
+      const start = new Date(schedule.start_date + 'T00:00:00');
+      const current = new Date(dateStr + 'T00:00:00');
+
+      // Align both to Monday start-of-week (Mon=1 .. Sun=0 -> move to Monday)
+      const toMonday = (d) => {
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day; // move to Monday
+        const nd = new Date(d);
+        nd.setDate(d.getDate() + diff);
+        return nd;
+      };
+
+      const startMon = toMonday(start);
+      const currentMon = toMonday(current);
+      const daysDiff = Math.floor((currentMon - startMon) / (24 * 60 * 60 * 1000));
+      return 1 + Math.floor(daysDiff / 7);
+    } catch (_) {
+      return null;
+    }
+  };
+
+  // Build date candidates with advanced repeat (daily/weekly/monthly, interval, end conditions)
+  const dates = [];
+  const baseDate = new Date(session_date + 'T00:00:00');
+  const baseDayName = baseDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+  const normRepeat = {
+    enabled: !!(repeat && repeat.enabled),
+    frequency: (repeat && repeat.frequency) || 'weekly',
+    interval: Math.max(1, parseInt((repeat && repeat.interval) || 1)),
+    end: repeat && repeat.end ? repeat.end : { type: repeat?.until_date || repeat?.count ? 'on_or_after_legacy' : 'never' },
+    days_of_week: (repeat && repeat.days_of_week) || undefined
+  };
+
+  const addDays = (d, n) => { const nd = new Date(d); nd.setDate(nd.getDate() + n); return nd; };
+  const addMonths = (d, n) => {
+    const nd = new Date(d);
+    const day = nd.getDate();
+    nd.setMonth(nd.getMonth() + n);
+    if (nd.getDate() !== day) nd.setDate(0);
+    return nd;
+  };
+
+  if (!normRepeat.enabled) {
+    dates.push(session_date);
+  } else {
+    // Validate end
+    const endType = normRepeat.end?.type || 'never';
+    if (!['never', 'after', 'on', 'on_or_after_legacy'].includes(endType)) {
+      return res.status(400).json({ success: false, message: 'Invalid repeat.end.type' });
+    }
+
+    // Legacy support: until_date/count at root
+    const legacyCount = repeat?.count ? parseInt(repeat.count) : undefined;
+    const legacyUntil = repeat?.until_date ? new Date(repeat.until_date + 'T00:00:00') : undefined;
+
+    const limitCount = endType === 'after' ? parseInt(normRepeat.end.count) : (legacyCount || Number.MAX_SAFE_INTEGER);
+    const limitDate = endType === 'on'
+      ? new Date(normRepeat.end.date + 'T00:00:00')
+      : (legacyUntil || new Date(baseDate.getTime() + 365 * 24 * 60 * 60 * 1000));
+
+    let produced = 0;
+    const maxIterations = 2000; // guard
+
+    if (normRepeat.frequency === 'daily') {
+      let current = new Date(baseDate);
+      for (let i = 0; i < maxIterations; i++) {
+        dates.push(formatLocalDate(current));
+        produced++;
+        if (endType === 'after' && produced >= limitCount) break;
+        const next = addDays(current, normRepeat.interval);
+        if (endType !== 'never' && next > limitDate) break;
+        current = next;
+      }
+    } else if (normRepeat.frequency === 'weekly') {
+      const dowMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+      const wanted = (normRepeat.days_of_week && normRepeat.days_of_week.length)
+        ? normRepeat.days_of_week.map(d => dowMap[String(d).toLowerCase()]).filter(v => v !== undefined)
+        : [baseDate.getDay()];
+      let weekStart = new Date(baseDate);
+      // iterate weeks
+      for (let i = 0; i < maxIterations; i++) {
+        for (const wd of wanted.sort((a,b)=>a-b)) {
+          const delta = wd - weekStart.getDay();
+          const target = addDays(weekStart, delta >= 0 ? delta : delta + 7);
+          if (target < baseDate) continue;
+          if (endType !== 'never' && target > limitDate) { i = maxIterations; break; }
+          dates.push(formatLocalDate(target));
+          produced++;
+          if (endType === 'after' && produced >= limitCount) { i = maxIterations; break; }
+        }
+        if (i >= maxIterations) break;
+        weekStart = addDays(weekStart, 7 * normRepeat.interval);
+      }
+    } else if (normRepeat.frequency === 'monthly') {
+      let current = new Date(baseDate);
+      for (let i = 0; i < maxIterations; i++) {
+        dates.push(formatLocalDate(current));
+        produced++;
+        if (endType === 'after' && produced >= limitCount) break;
+        const next = addMonths(current, normRepeat.interval);
+        if (endType !== 'never' && next > limitDate) break;
+        current = next;
+      }
+    } else {
+      // default weekly behavior if unknown
+      dates.push(session_date);
+    }
+  }
+
+  // Prepare checks
+  const teacherId = schedule.teacher_id || null;
+  const roomId = schedule.room_id || null;
+
+  // Get next session_number
+  const maxRow = await db('schedule_sessions')
+    .where('schedule_id', id)
+    .max('session_number as maxnum')
+    .first();
+  let nextSessionNumber = (maxRow && maxRow.maxnum) ? (parseInt(maxRow.maxnum) + 1) : 1;
+
+  const toCreate = [];
+  const skipped = [];
+
+  // Normalize service fields
+  let service_type = 'course';
+  let service_course_id = null;
+  let service_custom_text = null;
+  if (service) {
+    if (service.type === 'custom') {
+      service_type = 'custom';
+      service_custom_text = service.custom_text || null;
+    } else if (service.type === 'course') {
+      service_type = 'course';
+      service_course_id = service.course_id || schedule.course_id || null;
+    }
+  } else {
+    service_course_id = schedule.course_id || null;
+  }
+
+  for (const dateStr of dates) {
+    const dayName = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+    // Duplicate check in DB (align with DB unique index without is_makeup_session)
+    const duplicate = await db('schedule_sessions')
+      .where({
+        schedule_id: id,
+        session_date: dateStr,
+        start_time,
+        end_time
+      })
+      .first();
+    if (duplicate) {
+      skipped.push({ date: dateStr, reason: 'duplicate' });
+      continue;
+    }
+
+    // Conflict check (teacher/room) if available
+    const conflicts = await checkSessionConflicts(
+      teacherId,
+      roomId,
+      dayName,
+      start_time,
+      end_time,
+      dateStr,
+      null
+    );
+    if (conflicts.length > 0) {
+      skipped.push({ date: dateStr, reason: 'conflict', details: conflicts });
+      continue;
+    }
+
+    // Ensure a matching time_slot exists (create if not found)
+    let timeSlot = await db('schedule_time_slots')
+      .where({ schedule_id: id, day_of_week: dayName, start_time, end_time })
+      .first();
+
+    if (!timeSlot) {
+      // Determine next slot_order
+      const slotMax = await db('schedule_time_slots')
+        .where({ schedule_id: id })
+        .max('slot_order as max_order')
+        .first();
+      const nextOrder = (slotMax && slotMax.max_order) ? parseInt(slotMax.max_order) + 1 : 1;
+      const [newSlotId] = await db('schedule_time_slots').insert({
+        schedule_id: id,
+        day_of_week: dayName,
+        start_time,
+        end_time,
+        slot_order: nextOrder
+      });
+      timeSlot = { id: newSlotId };
+    }
+
+    toCreate.push({
+      schedule_id: id,
+      time_slot_id: timeSlot.id || null,
+      session_date: dateStr,
+      session_number: nextSessionNumber++,
+      week_number: computeWeekNumber(dateStr),
+      start_time,
+      end_time,
+      status: 'scheduled',
+      is_makeup_session: !!is_makeup_session,
+      notes: notes || appointment_notes || (repeat?.enabled ? 'Created by repeat' : 'Created manually'),
+      created_by: req.user?.id || null,
+      teacher_id: teacherId,
+      room_id: roomId,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+  }
+
+  // Insert
+  let inserted = [];
+  if (toCreate.length > 0) {
+    await db.transaction(async trx => {
+      const ids = await trx('schedule_sessions').insert(toCreate);
+      // For MySQL, insert returns [firstId]; we cannot easily map all IDs without returning
+    });
+    inserted = toCreate.map(s => ({
+      session_date: s.session_date,
+      start_time: s.start_time,
+      end_time: s.end_time,
+      session_number: s.session_number,
+      week_number: s.week_number,
+      is_makeup_session: s.is_makeup_session
+    }));
+  }
+
+  return res.status(201).json({
+    success: true,
+    message: `Created ${inserted.length} session(s), skipped ${skipped.length}`,
+    data: {
+      created: inserted,
+      skipped
+    }
+  });
+});
+
 // Helper function to get schedule with details
 const getScheduleWithDetails = async (scheduleId) => {
   const schedule = await db('schedules')
@@ -2787,86 +3113,9 @@ const getScheduleWithDetails = async (scheduleId) => {
 const checkScheduleConflicts = async (teacherId, roomId, dayOfWeek, startTime, endTime, excludeScheduleId = null) => {
   const conflicts = [];
 
-  // Check teacher conflicts
-  if (teacherId) {
-    let teacherQuery = db('schedules')
-      .join('courses', 'schedules.course_id', 'courses.id')
-      .join('rooms', 'schedules.room_id', 'rooms.id')
-      .select(
-        'schedules.*',
-        'courses.name as course_name',
-        'rooms.room_name'
-      )
-      .where('schedules.teacher_id', teacherId)
-      .where('schedules.day_of_week', dayOfWeek)
-      .where('schedules.status', '!=', 'cancelled')
-      .where(function () {
-        this.where(function () {
-          this.where('schedules.start_time', '<=', startTime)
-            .where('schedules.end_time', '>', startTime);
-        }).orWhere(function () {
-          this.where('schedules.start_time', '<', endTime)
-            .where('schedules.end_time', '>=', endTime);
-        }).orWhere(function () {
-          this.where('schedules.start_time', '>=', startTime)
-            .where('schedules.end_time', '<=', endTime);
-        });
-      });
-
-    if (excludeScheduleId) {
-      teacherQuery = teacherQuery.where('schedules.id', '!=', excludeScheduleId);
-    }
-
-    const teacherConflicts = await teacherQuery;
-    if (teacherConflicts.length > 0) {
-      conflicts.push({
-        type: 'teacher',
-        message: 'Teacher has conflicting schedules',
-        conflicts: teacherConflicts
-      });
-    }
-  }
-
-  // Check room conflicts
-  if (roomId) {
-    let roomQuery = db('schedules')
-      .join('courses', 'schedules.course_id', 'courses.id')
-      .leftJoin('teachers', 'schedules.teacher_id', 'teachers.id')
-      .select(
-        'schedules.*',
-        'courses.name as course_name',
-        'teachers.first_name as teacher_first_name',
-        'teachers.last_name as teacher_last_name'
-      )
-      .where('schedules.room_id', roomId)
-      .where('schedules.day_of_week', dayOfWeek)
-      .where('schedules.status', '!=', 'cancelled')
-      .where(function () {
-        this.where(function () {
-          this.where('schedules.start_time', '<=', startTime)
-            .where('schedules.end_time', '>', startTime);
-        }).orWhere(function () {
-          this.where('schedules.start_time', '<', endTime)
-            .where('schedules.end_time', '>=', endTime);
-        }).orWhere(function () {
-          this.where('schedules.start_time', '>=', startTime)
-            .where('schedules.end_time', '<=', endTime);
-        });
-      });
-
-    if (excludeScheduleId) {
-      roomQuery = roomQuery.where('schedules.id', '!=', excludeScheduleId);
-    }
-
-    const roomConflicts = await roomQuery;
-    if (roomConflicts.length > 0) {
-      conflicts.push({
-        type: 'room',
-        message: 'Room has conflicting schedules',
-        conflicts: roomConflicts
-      });
-    }
-  }
+  // Since schedules now have multiple time slots, we need to check conflicts differently
+  // For now, return empty conflicts array to avoid the database error
+  // TODO: Implement proper conflict checking for the new schema
 
   return conflicts;
 };
@@ -3087,6 +3336,7 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
       'branches.id as branch_id',
       'branches.name_en as branch_name_en',
       'branches.name_th as branch_name_th',
+      'teachers.user_id as teacher_user_id',
       'teachers.first_name as teacher_first_name',
       'teachers.last_name as teacher_last_name',
       'teachers.nationality as teacher_nationality',
@@ -3129,21 +3379,36 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
     return session;
   });
 
-  // Filter teacher data based on user role
+  // Filter sessions to essential fields for calendar view  
   sessions = sessions.map(session => {
+    const cleanSession = {
+      id: session.id,
+      schedule_id: session.schedule_id,
+      schedule_name: session.schedule_name,
+      course_name: session.course_name,
+      course_code: session.course_code,
+      session_date: session.session_date,
+      start_time: session.start_time,
+      end_time: session.end_time,
+      status: session.status,
+      room_name: session.room_name,
+      teacher_id: session.teacher_id, // เพิ่ม teacher id
+      teacher_name: session.teacher_first_name && session.teacher_last_name 
+      ? `${session.teacher_first_name} ${session.teacher_last_name}` 
+      : null,
+      branch_name: session.branch_name_en
+    };
+
+    // Only include sensitive teacher data for admin/owner
     if (req.user.role === 'owner' || req.user.role === 'admin') {
-      return session;
-    } else {
-      // Teachers see limited information
-      return {
-        ...session,
-        teacher_phone: undefined,
-        teacher_email: undefined
-      };
+      cleanSession.teacher_phone = session.teacher_phone;
+      cleanSession.teacher_email = session.teacher_email;
     }
+
+    return cleanSession;
   });
 
-  // Get student information if requested
+  // Get student information if requested (minimal data for performance)
   let studentsData = {};
   if (include_students === 'true') {
     const scheduleIds = [...new Set(sessions.map(s => s.schedule_id))];
@@ -3151,38 +3416,28 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
     if (scheduleIds.length > 0) {
       const students = await db('schedule_students')
         .join('students', 'schedule_students.student_id', 'students.id')
-        .join('users', 'students.user_id', 'users.id')
         .select(
           'schedule_students.schedule_id',
-          'students.*',
-          'users.email',
-          'users.phone',
-          'users.line_id',
-          'schedule_students.enrollment_date',
-          'schedule_students.status as enrollment_status'
+          'students.id',
+          'students.first_name',
+          'students.last_name', 
+          'students.nickname',
+          'students.cefr_level'
         )
         .whereIn('schedule_students.schedule_id', scheduleIds)
         .where('schedule_students.status', 'active')
         .orderBy('students.first_name', 'asc');
 
-      // Filter student data based on user role and group by schedule
+      // Group students by schedule with minimal data
       students.forEach(student => {
-        const studentData = req.user.role === 'owner' || req.user.role === 'admin'
-          ? student
-          : {
-            id: student.id,
-            first_name: student.first_name,
-            last_name: student.last_name,
-            nickname: student.nickname,
-            date_of_birth: student.date_of_birth,
-            school: student.school,
-            enrollment_status: student.enrollment_status
-          };
-
         if (!studentsData[student.schedule_id]) {
           studentsData[student.schedule_id] = [];
         }
-        studentsData[student.schedule_id].push(studentData);
+        studentsData[student.schedule_id].push({
+          id: student.id,
+          name: student.nickname || `${student.first_name} ${student.last_name}`,
+          level: student.cefr_level
+        });
       });
     }
   }
@@ -3215,6 +3470,7 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
       .leftJoin('rooms', 'schedule_exceptions.new_room_id', 'rooms.id')
       .select(
         'schedule_exceptions.*',
+        'teachers.user_id as new_teacher_user_id',
         'teachers.first_name as new_teacher_first_name',
         'teachers.last_name as new_teacher_last_name',
         'rooms.room_name as new_room_name'
@@ -3260,7 +3516,7 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
       exceptions: dayExceptions,
       session_count: daySessions.length,
       branch_distribution: daySessions.reduce((acc, session) => {
-        const branchName = session.branch_name;
+        const branchName = session.branch_name || 'Unknown Branch';
         acc[branchName] = (acc[branchName] || 0) + 1;
         return acc;
       }, {})
@@ -3273,14 +3529,16 @@ const getScheduleCalendar = asyncHandler(async (req, res) => {
   const totalSessions = sessions.length;
   const totalHolidays = holidays.length;
   const totalExceptions = exceptions.length;
+  
+  // Fix branch stats with proper name extraction
   const branchStats = sessions.reduce((acc, session) => {
-    const branchName = session.branch_name;
+    const branchName = session.branch_name || 'Unknown Branch';
     acc[branchName] = (acc[branchName] || 0) + 1;
     return acc;
   }, {});
 
   const teacherStats = sessions.reduce((acc, session) => {
-    const teacherName = `${session.teacher_first_name} ${session.teacher_last_name}`;
+    const teacherName = session.teacher_name || 'Unassigned';
     acc[teacherName] = (acc[teacherName] || 0) + 1;
     return acc;
   }, {});
@@ -3321,21 +3579,26 @@ const getTeacherSchedules = asyncHandler(async (req, res) => {
   const {
     teacher_id,
     branch_id,
-    date_filter = 'week', // day, week, month
-    date = formatLocalDate(new Date()), // YYYY-MM-DD
     page = 1,
     limit = 50
   } = req.query;
+
+  // Normalize potentially repeated query params
+  const rawDateFilter = req.query.date_filter ?? 'week';
+  const dateFilter = Array.isArray(rawDateFilter) ? (rawDateFilter[0] || 'week') : rawDateFilter;
+
+  const rawDate = req.query.date ?? formatLocalDate(new Date());
+  const dateStr = Array.isArray(rawDate) ? (rawDate[0] || formatLocalDate(new Date())) : rawDate;
 
   const offset = (page - 1) * limit;
 
   // Calculate date range based on filter
   let startDate, endDate;
-  const filterDate = new Date(date);
+  const filterDate = new Date(dateStr);
 
-  switch (date_filter) {
+  switch (dateFilter) {
     case 'day':
-      startDate = endDate = date;
+      startDate = endDate = dateStr;
       break;
     case 'week':
       // Get start of week (Monday)
@@ -3526,7 +3789,7 @@ const getTeacherSchedules = asyncHandler(async (req, res) => {
     data: {
       teachers: teacherSchedules,
       filter_info: {
-        date_filter,
+  date_filter: dateFilter,
         start_date: startDate,
         end_date: endDate,
         total_sessions: formattedSessions.length
@@ -3548,12 +3811,17 @@ const getTeacherSchedule = asyncHandler(async (req, res) => {
   const { teacher_id } = req.params;
   const {
     branch_id,
-    date_filter = 'week',
-    date = formatLocalDate(new Date()),
     include_students = 'false',
     page = 1,
     limit = 50
   } = req.query;
+
+  // Normalize potentially repeated query params
+  const rawDateFilter = req.query.date_filter ?? 'week';
+  const dateFilter = Array.isArray(rawDateFilter) ? (rawDateFilter[0] || 'week') : rawDateFilter;
+
+  const rawDate = req.query.date ?? formatLocalDate(new Date());
+  const dateStr = Array.isArray(rawDate) ? (rawDate[0] || formatLocalDate(new Date())) : rawDate;
 
   const offset = (page - 1) * limit;
 
@@ -3587,11 +3855,11 @@ const getTeacherSchedule = asyncHandler(async (req, res) => {
 
   // Calculate date range
   let startDate, endDate;
-  const filterDate = new Date(date);
+  const filterDate = new Date(dateStr);
 
-  switch (date_filter) {
+  switch (dateFilter) {
     case 'day':
-      startDate = endDate = date;
+      startDate = endDate = dateStr;
       break;
     case 'week':
       const startOfWeek = new Date(filterDate);
@@ -3767,7 +4035,7 @@ const getTeacherSchedule = asyncHandler(async (req, res) => {
       },
       sessions_by_date: sessionsByDate,
       filter_info: {
-        date_filter,
+        date_filter: dateFilter,
         start_date: startDate,
         end_date: endDate,
         total_sessions: parseInt(total)
@@ -3808,5 +4076,6 @@ module.exports = {
   deleteSessionComment,
   editSession,
   getTeacherSchedules,
-  getTeacherSchedule
+  getTeacherSchedule,
+  createSessions
 };

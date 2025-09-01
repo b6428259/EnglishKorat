@@ -28,7 +28,7 @@ const getRooms = asyncHandler(async (req, res) => {
     query = query.where('rooms.status', status);
   }
 
-  const rooms = await query.orderBy('branches.name', 'asc').orderBy('rooms.room_name', 'asc');
+  const rooms = await query.orderBy('branches.name_en', 'asc').orderBy('rooms.room_name', 'asc');
 
   // Parse JSON fields
   rooms.forEach(room => {

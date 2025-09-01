@@ -202,6 +202,9 @@ GET  /api/v1/policy/changes    # Get change history
 
 **Complete API Documentation**: [docs/api/README.md](docs/api/README.md)
 
+Additional module docs
+- Schedule Controller API: [docs/schedule-controller.md](docs/schedule-controller.md)
+
 ## 🔄 Development Workflow
 
 ### Git Workflow

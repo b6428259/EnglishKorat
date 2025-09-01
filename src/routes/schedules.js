@@ -26,7 +26,8 @@ const {
   deleteSessionComment,
   editSession,
   getTeacherSchedules,
-  getTeacherSchedule
+  getTeacherSchedule,
+  createSessions
 } = require('../controllers/scheduleController');
 const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 const { validateConflictCheck } = require('../middleware/validationMiddleware');
@@ -107,6 +108,11 @@ router.post('/:id/exceptions/session', authMiddleware, authorize('admin', 'owner
 // @desc    Get schedule sessions with exceptions
 // @access  Private
 router.get('/:id/sessions', authMiddleware, getScheduleSessions);
+
+// @route   POST /api/v1/schedules/:id/sessions/create
+// @desc    Create single or repeating session(s)
+// @access  Private (Admin, Owner)
+router.post('/:id/sessions/create', authMiddleware, authorize('admin', 'owner'), createSessions);
 
 // @route   POST /api/v1/schedules/:id/makeup
 // @desc    Create makeup session

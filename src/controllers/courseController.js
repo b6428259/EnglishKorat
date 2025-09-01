@@ -97,7 +97,7 @@ const getCourses = asyncHandler(async (req, res) => {
   if (branch_id) {
     // ถ้ามีการระบุ branch_id ใน query string ให้ใช้ตามนั้น
     query = query.where('courses.branch_id', branch_id);
-  } else if (req.user.role !== 'owner') {
+  } else if (req.user && req.user.role !== 'owner') {
     // ถ้าไม่ใช่ owner ให้เห็นคอร์สของ branch ตัวเองและ branch 3 (online)
     if (req.user.branch_id === 1 || req.user.branch_id === 2) {
       query = query.whereIn('courses.branch_id', [req.user.branch_id, 3]);

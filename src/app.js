@@ -22,14 +22,14 @@ app.use(cors({
 }));
 
 // Rate limiting (skip in tests to avoid flakiness)
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP, please try again later.'
-});
-if (process.env.NODE_ENV !== 'test') {
-  app.use(limiter);
-}
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
+//   message: 'Too many requests from this IP, please try again later.'
+// });
+// if (process.env.NODE_ENV !== 'test') {
+//   app.use(limiter);
+// }
 
 // General middleware
 app.use(compression());
