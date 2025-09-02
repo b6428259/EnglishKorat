@@ -1,3 +1,8 @@
+/**
+ * Student Controller
+ * Enhanced with notification system integration
+ */
+
 const { db } = require('../config/database');
 const asyncHandler = require('../utils/asyncHandler');
 const { safeJsonParse } = require('../utils/safeJson');
@@ -8,6 +13,7 @@ const {
   calculateAge, 
   determineAgeGroup 
 } = require('../utils/citizenIdUtils');
+const { sendStudentRegistrationNotification } = require('./notificationController');
 
 
 // @desc    Register a new student with full details
@@ -196,6 +202,24 @@ const registerStudent = asyncHandler(async (req, res) => {
   
   // Remove sensitive data
   delete student.citizen_id;
+
+  // Send notification to admin and owner about new student registration
+  try {
+    const course = student.selected_courses && student.selected_courses.length > 0 
+      ? student.selected_courses[0].name 
+      : 'General English';
+      
+    await sendStudentRegistrationNotification({
+      id: student.id,
+      name: `${student.first_name} ${student.last_name}`,
+      email: student.email,
+      course_name: course,
+      registrationDate: new Date().toLocaleDateString()
+    });
+  } catch (notificationError) {
+    // Don't fail the registration if notification fails
+    console.error('Failed to send student registration notification:', notificationError);
+  }
 
   res.status(201).json({
     success: true,

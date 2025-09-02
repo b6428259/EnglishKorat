@@ -1,6 +1,7 @@
 /**
  * Notification Service - handles sending notifications via multiple channels
  * Supports LINE messaging, email, and web notifications
+ * Enhanced with Redis logging and role-based notifications
  */
 
 const { 
@@ -9,23 +10,50 @@ const {
   emailConfig, 
   getVariableReplacers 
 } = require('../config/notifications');
+const NotificationLoggerService = require('../services/NotificationLoggerService');
 
 class NotificationService {
   constructor() {
     this.lineConfig = lineConfig;
     this.emailConfig = emailConfig;
     this.notificationTypes = notificationTypes;
+    this.logger = new NotificationLoggerService();
   }
 
-  // Send notification through multiple channels
-  async sendNotification(type, userId, data, knex, channels = ['web', 'line']) {
+  // Send notification through multiple channels with role-based filtering
+  async sendNotification(type, userId, data, knex, channels = ['web', 'line'], userRole = null) {
     try {
+      // Check if notification type supports the user's role
+      const notificationType = this.notificationTypes[type];
+      if (notificationType && notificationType.roles && userRole) {
+        if (!notificationType.roles.includes(userRole)) {
+          // Use logger instead of console.log
+          return {
+            web: false,
+            line: false,
+            email: false,
+            skipped: true,
+            reason: 'role_not_applicable'
+          };
+        }
+      }
+
       const results = {
         web: false,
         line: false,
         email: false,
         errors: []
       };
+
+      // Get user information for role validation
+      let user = null;
+      if (!userRole) {
+        user = await knex('users')
+          .select('role', 'line_id', 'email')
+          .where('id', userId)
+          .first();
+        userRole = user?.role;
+      }
 
       // Create web notification
       if (channels.includes('web')) {
@@ -51,6 +79,27 @@ class NotificationService {
           results.email = await this.sendEmailNotification(type, userId, data, knex);
         } catch (error) {
           results.errors.push(`Email notification error: ${error.message}`);
+        }
+      }
+
+      // Log notification to Redis
+      if (results.web || results.line || results.email) {
+        try {
+          const logData = {
+            id: results.web || new Date().getTime(), // Use notification ID or timestamp
+            user_id: userId,
+            type: type,
+            title: data.title || this.getNotificationTitle(type, data),
+            channels: channels,
+            line_sent: results.line,
+            email_sent: results.email,
+            metadata: data,
+            userRole: userRole
+          };
+          
+          await this.logger.logNotification(logData);
+        } catch (logError) {
+          // Use logger instead of console.error
         }
       }
 
@@ -427,6 +476,192 @@ class NotificationService {
       return summary;
     } catch (error) {
       throw new Error(`Error getting notification statistics: ${error.message}`);
+    }
+  }
+
+  // Helper method to generate notification title
+  getNotificationTitle(type, data) {
+    const variables = getVariableReplacers(type, data);
+    
+    const titleTemplates = {
+      class_confirmation: `Class Confirmation Required - ${variables.course_name}`,
+      leave_approval: `Leave Request Update - ${variables.course_name}`,
+      class_cancellation: `Class Cancelled - ${variables.course_name}`,
+      schedule_change: `Schedule Change - ${variables.course_name}`,
+      payment_reminder: `Payment Reminder - ${variables.amount} THB`,
+      report_deadline: 'Report Deadline Reminder',
+      room_conflict: 'Room Conflict Alert',
+      general: 'General Notification',
+      student_registration: `New Student Registration - ${variables.student_name}`,
+      appointment_reminder: `Appointment Reminder - ${variables.course_name || variables.appointmentTitle}`,
+      class_reminder: `Class Reminder - ${variables.course_name}`,
+      system_maintenance: `System Maintenance - ${variables.maintenance_title}`
+    };
+
+    return titleTemplates[type] || 'Notification';
+  }
+
+  // Send notification to multiple users based on role
+  async sendRoleBasedNotification(type, roleTargets, data, knex, channels = ['web', 'line']) {
+    try {
+      const results = {
+        sent: [],
+        errors: [],
+        totalSent: 0,
+        skipped: 0
+      };
+
+      // Get users by roles
+      const users = await knex('users')
+        .select('id', 'role', 'username')
+        .whereIn('role', roleTargets)
+        .where('status', 'active'); // Only active users
+
+      for (const user of users) {
+        try {
+          const result = await this.sendNotification(type, user.id, data, knex, channels, user.role);
+          
+          if (result.skipped) {
+            results.skipped++;
+          } else {
+            results.sent.push({
+              userId: user.id,
+              username: user.username,
+              role: user.role,
+              result: result
+            });
+            results.totalSent++;
+          }
+        } catch (error) {
+          results.errors.push({
+            userId: user.id,
+            username: user.username,
+            role: user.role,
+            error: error.message
+          });
+        }
+      }
+
+      return results;
+    } catch (error) {
+      throw new Error(`Error sending role-based notification: ${error.message}`);
+    }
+  }
+
+  // Send student registration notification to admin and owner
+  async sendStudentRegistrationNotification(studentData, knex) {
+    const data = {
+      studentName: studentData.name,
+      studentEmail: studentData.email,
+      courseName: studentData.course_name,
+      registrationDate: new Date().toLocaleDateString(),
+      studentId: studentData.id
+    };
+
+    return await this.sendRoleBasedNotification(
+      'student_registration',
+      ['admin', 'owner'],
+      data,
+      knex,
+      ['web', 'line']
+    );
+  }
+
+  // Send appointment/class reminders
+  async sendAppointmentReminders(appointments, knex) {
+    const results = {
+      sent: [],
+      errors: [],
+      totalSent: 0
+    };
+
+    for (const appointment of appointments) {
+      try {
+        // Send to student
+        if (appointment.student_id) {
+          const studentResult = await this.sendNotification(
+            'appointment_reminder',
+            appointment.student_id,
+            {
+              courseName: appointment.course_name,
+              date: appointment.date,
+              time: appointment.time,
+              room: appointment.room,
+              teacherName: appointment.teacher_name,
+              appointmentId: appointment.id
+            },
+            knex,
+            ['web', 'line'],
+            'student'
+          );
+          
+          if (!studentResult.skipped) {
+            results.sent.push({ type: 'student', appointmentId: appointment.id, result: studentResult });
+            results.totalSent++;
+          }
+        }
+
+        // Send to teacher
+        if (appointment.teacher_id) {
+          const teacherResult = await this.sendNotification(
+            'appointment_reminder',
+            appointment.teacher_id,
+            {
+              courseName: appointment.course_name,
+              date: appointment.date,
+              time: appointment.time,
+              room: appointment.room,
+              studentName: appointment.student_name,
+              appointmentId: appointment.id
+            },
+            knex,
+            ['web', 'line'],
+            'teacher'
+          );
+          
+          if (!teacherResult.skipped) {
+            results.sent.push({ type: 'teacher', appointmentId: appointment.id, result: teacherResult });
+            results.totalSent++;
+          }
+        }
+
+        // Send to admin/owner for important appointments
+        if (appointment.priority === 'high') {
+          const adminResult = await this.sendRoleBasedNotification(
+            'appointment_reminder',
+            ['admin', 'owner'],
+            {
+              courseName: appointment.course_name,
+              date: appointment.date,
+              time: appointment.time,
+              room: appointment.room,
+              teacherName: appointment.teacher_name,
+              studentName: appointment.student_name,
+              appointmentId: appointment.id
+            },
+            knex,
+            ['web']
+          );
+          
+          results.totalSent += adminResult.totalSent;
+          results.sent.push(...adminResult.sent.map(s => ({ ...s, type: 'admin' })));
+          results.errors.push(...adminResult.errors);
+        }
+      } catch (error) {
+        results.errors.push({
+          appointmentId: appointment.id,
+          error: error.message
+        });
+      }
+    }
+
+    return results;
+  }
+
+  // Close the logger service connection
+  async close() {
+    if (this.logger) {
+      await this.logger.close();
     }
   }
 }
