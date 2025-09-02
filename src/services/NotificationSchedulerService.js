@@ -320,8 +320,8 @@ class NotificationSchedulerService {
       isInitialized: this.isInitialized,
       scheduledJobs: this.scheduledJobs.length,
       jobs: this.scheduledJobs.map(job => ({
-        running: job.getStatus() === 'scheduled',
-        lastDate: job.lastDate()
+        running: job && typeof job.getStatus === 'function' ? job.getStatus() === 'scheduled' : false,
+        lastDate: job && typeof job.lastDate === 'function' ? job.lastDate() : null
       }))
     };
   }
@@ -329,7 +329,7 @@ class NotificationSchedulerService {
   // Stop all scheduled jobs
   stop() {
     this.scheduledJobs.forEach(job => {
-      if (job.getStatus() === 'scheduled') {
+      if (job && typeof job.stop === 'function') {
         job.stop();
       }
     });
