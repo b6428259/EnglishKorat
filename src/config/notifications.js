@@ -56,6 +56,37 @@ const notificationTypes = {
     requiresAction: false,
     expiresIn: 30 * 24 * 60 * 60 * 1000, // 30 days
     autoReminder: false
+  },
+  // New notification types for the enhanced system
+  student_registration: {
+    priority: 'medium',
+    requiresAction: false,
+    expiresIn: 7 * 24 * 60 * 60 * 1000, // 7 days
+    autoReminder: false,
+    roles: ['admin', 'owner'] // Only admin and owner get these notifications
+  },
+  appointment_reminder: {
+    priority: 'high',
+    requiresAction: false,
+    expiresIn: 24 * 60 * 60 * 1000, // 24 hours
+    autoReminder: true,
+    reminderInterval: 2 * 60 * 60 * 1000, // 2 hours
+    roles: ['teacher', 'student', 'admin', 'owner'] // All roles get appointment reminders
+  },
+  class_reminder: {
+    priority: 'high',
+    requiresAction: false,
+    expiresIn: 24 * 60 * 60 * 1000, // 24 hours
+    autoReminder: true,
+    reminderInterval: 2 * 60 * 60 * 1000, // 2 hours
+    roles: ['teacher', 'student'] // Teachers and students get class reminders
+  },
+  system_maintenance: {
+    priority: 'medium',
+    requiresAction: false,
+    expiresIn: 48 * 60 * 60 * 1000, // 48 hours
+    autoReminder: false,
+    roles: ['admin', 'owner'] // System notifications for admin/owner
   }
 };
 
@@ -290,6 +321,79 @@ const schedulingConfig = {
     firstReminder: 3 * 24 * 60 * 60 * 1000, // 3 days before deadline
     secondReminder: 24 * 60 * 60 * 1000,     // 1 day before deadline
     finalReminder: 2 * 60 * 60 * 1000        // 2 hours before deadline
+  },
+
+  // When to send appointment reminders
+  appointmentReminder: {
+    sendBefore: 24 * 60 * 60 * 1000, // 24 hours before appointment
+    reminderInterval: 2 * 60 * 60 * 1000, // Send reminder every 2 hours if not confirmed
+    finalReminder: 30 * 60 * 1000     // Final reminder 30 minutes before
+  },
+
+  // When to send class reminders
+  classReminder: {
+    sendBefore: 2 * 60 * 60 * 1000,   // 2 hours before class
+    finalReminder: 30 * 60 * 1000     // Final reminder 30 minutes before
+  }
+};
+
+// Notification cleanup configuration
+const cleanupConfig = {
+  // Auto-delete notifications after specified days
+  defaultRetentionDays: parseInt(process.env.NOTIFICATION_RETENTION_DAYS) || 10,
+  maxRetentionDays: 365, // Maximum retention period
+  cleanupInterval: 24 * 60 * 60 * 1000, // Run cleanup every 24 hours
+  
+  // Retention periods by notification type (in days)
+  retentionByType: {
+    class_confirmation: 7,
+    leave_approval: 30,
+    class_cancellation: 7,
+    schedule_change: 14,
+    payment_reminder: 90,
+    report_deadline: 30,
+    room_conflict: 7,
+    general: 30,
+    student_registration: 90,
+    appointment_reminder: 7,
+    class_reminder: 7,
+    system_maintenance: 30
+  },
+  
+  // Redis cleanup configuration
+  batchSize: 100, // Process notifications in batches
+  maxProcessingTime: 30 * 60 * 1000 // Maximum processing time: 30 minutes
+};
+
+// Logging configuration for Redis and S3 archival
+const loggingConfig = {
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || 6379,
+    password: process.env.REDIS_PASSWORD,
+    keyPrefix: 'notification_logs:',
+    logExpiry: 24 * 60 * 60, // Redis logs expire after 24 hours (in seconds)
+  },
+  
+  s3: {
+    bucket: process.env.NOTIFICATION_LOGS_BUCKET || process.env.AWS_S3_BUCKET,
+    prefix: 'notification-logs/',
+    region: process.env.AWS_REGION || 'ap-southeast-1',
+  },
+  
+  archival: {
+    enabled: process.env.NOTIFICATION_ARCHIVAL_ENABLED !== 'false',
+    archiveAfterDays: 1, // Archive to S3 after 1 day
+    retentionDays: parseInt(process.env.NOTIFICATION_LOG_RETENTION_DAYS) || 90,
+    compressionLevel: 9, // Maximum compression for ZIP files
+    archiveInterval: 60 * 60 * 1000, // Check for archival every hour
+  },
+  
+  // Log filtering and search configuration  
+  filters: {
+    allowedTypes: Object.keys(notificationTypes),
+    maxResults: 1000,
+    defaultPageSize: 50,
   }
 };
 
@@ -362,6 +466,38 @@ const getVariableReplacers = (type, data) => {
       bill_number: data.billNumber,
       payment_url: `${process.env.FRONTEND_URL}/payment/${data.billId}`
     };
+
+  case 'student_registration':
+    return {
+      ...common,
+      student_name: data.studentName,
+      student_email: data.studentEmail,
+      course_name: data.courseName,
+      registration_date: data.registrationDate,
+      admin_url: `${process.env.FRONTEND_URL}/admin/students/${data.studentId}`
+    };
+
+  case 'appointment_reminder':
+  case 'class_reminder':
+    return {
+      ...common,
+      course_name: data.courseName || data.appointmentTitle,
+      date: data.date,
+      time: data.time,
+      room: data.room,
+      teacher_name: data.teacherName,
+      student_name: data.studentName,
+      appointment_url: `${process.env.FRONTEND_URL}/appointments/${data.appointmentId || data.classId}`
+    };
+
+  case 'system_maintenance':
+    return {
+      ...common,
+      maintenance_title: data.title,
+      scheduled_time: data.scheduledTime,
+      estimated_duration: data.estimatedDuration,
+      affected_services: data.affectedServices
+    };
       
   default:
     return common;
@@ -375,5 +511,7 @@ module.exports = {
   emailConfig,
   schedulingConfig,
   queueConfig,
+  cleanupConfig,
+  loggingConfig,
   getVariableReplacers
 };

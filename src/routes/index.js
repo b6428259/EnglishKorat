@@ -15,6 +15,7 @@ const leavePolicyRoutes = require('./leavePolicies');
 const changeHistoryRoutes = require('./changeHistory');
 const registrationRoutes = require('./registration');
 const teacherRoutes = require('./teachers'); // Assuming you have a teachers.js route file
+const notificationRoutes = require('./notifications'); // New notification routes
 
 // ----- Register route modules -----
 router.use('/auth', authRoutes);
@@ -29,6 +30,7 @@ router.use('/leave-policies', leavePolicyRoutes);
 router.use('/policy', changeHistoryRoutes);
 router.use('/registration', registrationRoutes);
 router.use('/teachers', teacherRoutes); // Register teachers routes
+router.use('/notifications', notificationRoutes); // Register notification routes
 
 // ===== Helpers: scan express routes =====
 function cleanRegexPath(rx) {
