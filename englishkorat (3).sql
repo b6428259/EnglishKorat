@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: ekorat-db.c96wcau48ea0.ap-southeast-1.rds.amazonaws.com
--- Generation Time: Aug 31, 2025 at 07:24 AM
+-- Generation Time: Sep 02, 2025 at 04:09 AM
 -- Server version: 8.0.42
 -- PHP Version: 8.2.29
 
@@ -587,7 +587,10 @@ INSERT INTO `knex_migrations` (`id`, `name`, `batch`, `migration_time`) VALUES
 (7, '006_create_comprehensive_system.js', 1, '2025-08-15 09:28:30'),
 (8, '007_update_existing_tables.js', 1, '2025-08-15 09:28:31'),
 (9, '008_enhance_student_registration_system.js', 1, '2025-08-15 09:28:33'),
-(10, '009_create_comprehensive_pricing_system.js', 1, '2025-08-15 09:28:35');
+(10, '009_create_comprehensive_pricing_system.js', 1, '2025-08-15 09:28:35'),
+(11, '20250831_drop_schedule_slots_and_add_unique_sessions.js', 2, '2025-08-31 14:42:54'),
+(12, '20250831_add_session_service_fields.js', 3, '2025-08-31 15:00:55'),
+(13, '20250831_fix_service_fields_schedule_level.js', 4, '2025-08-31 15:11:53');
 
 -- --------------------------------------------------------
 
@@ -1111,17 +1114,19 @@ CREATE TABLE `schedules` (
   `notes` text COMMENT 'หมายเหตุ',
   `admin_assigned` int UNSIGNED DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `service_type` enum('course','custom') NOT NULL DEFAULT 'course',
+  `service_custom_text` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='ตารางเรียนหลัก - Template สำหรับการสร้างคลาสแต่ละครั้ง';
 
 --
 -- Dumping data for table `schedules`
 --
 
-INSERT INTO `schedules` (`id`, `course_id`, `teacher_id`, `room_id`, `schedule_name`, `schedule_type`, `recurring_pattern`, `total_hours`, `hours_per_session`, `sessions_per_week`, `max_students`, `current_students`, `start_date`, `estimated_end_date`, `actual_end_date`, `status`, `auto_reschedule_holidays`, `notes`, `admin_assigned`, `created_at`, `updated_at`) VALUES
-(10, 5, 9, 3, 'Adults Conversation A2 - Wed/Thu Morning', 'fixed', 'weekly', 4.0, 2.0, 2, 2, 2, '2025-09-01', '2025-09-08', NULL, 'active', 1, 'Intensive conversation course', 1, '2025-08-28 04:13:19', '2025-08-28 06:34:46'),
-(11, 5, 8, 3, 'Adults Conversation A2 - Wed/Thu Morning', 'fixed', 'weekly', 4.0, 2.0, 2, 2, 0, '2025-09-01', '2025-09-08', NULL, 'active', 1, 'Intensive conversation course', 1, '2025-08-28 04:22:35', '2025-08-28 06:03:36'),
-(12, 5, 3, 3, 'Adults Conversation A2 - Wed/Thu Morning', 'fixed', 'weekly', 4.0, 2.0, 2, 2, 0, '2025-09-01', '2025-09-08', NULL, 'active', 1, 'Intensive conversation course', 1, '2025-08-28 04:32:43', '2025-08-28 04:32:43');
+INSERT INTO `schedules` (`id`, `course_id`, `teacher_id`, `room_id`, `schedule_name`, `schedule_type`, `recurring_pattern`, `total_hours`, `hours_per_session`, `sessions_per_week`, `max_students`, `current_students`, `start_date`, `estimated_end_date`, `actual_end_date`, `status`, `auto_reschedule_holidays`, `notes`, `admin_assigned`, `created_at`, `updated_at`, `service_type`, `service_custom_text`) VALUES
+(10, 5, 9, 3, 'Adults Conversation A2 - Wed/Thu Morning', 'fixed', 'weekly', 4.0, 2.0, 2, 2, 2, '2025-08-31', '2025-09-08', NULL, 'active', 1, 'Intensive conversation course', 1, '2025-08-28 04:13:19', '2025-08-31 09:03:11', 'course', NULL),
+(11, 5, 8, 3, 'Adults Conversation A2 - Wed/Thu Morning', 'fixed', 'weekly', 4.0, 2.0, 2, 2, 0, '2025-09-01', '2025-09-08', NULL, 'active', 1, 'Intensive conversation course', 1, '2025-08-28 04:22:35', '2025-08-28 06:03:36', 'course', NULL),
+(12, 5, 3, 3, 'Adults Conversation A2 - Wed/Thu Morning', 'fixed', 'weekly', 4.0, 2.0, 2, 2, 0, '2025-09-01', '2025-09-08', NULL, 'active', 1, 'Intensive conversation course', 1, '2025-08-28 04:32:43', '2025-08-28 04:32:43', 'course', NULL);
 
 -- --------------------------------------------------------
 
@@ -1189,37 +1194,21 @@ CREATE TABLE `schedule_sessions` (
   `is_makeup_session` tinyint(1) DEFAULT '0' COMMENT 'เป็น makeup session หรือไม่',
   `notes` text,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` int UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='คลาสแต่ละครั้ง - สร้างจาก schedule template';
 
 --
 -- Dumping data for table `schedule_sessions`
 --
 
-INSERT INTO `schedule_sessions` (`id`, `schedule_id`, `time_slot_id`, `session_date`, `session_number`, `week_number`, `start_time`, `end_time`, `teacher_id`, `room_id`, `status`, `cancellation_reason`, `makeup_for_session_id`, `is_makeup_session`, `notes`, `created_at`, `updated_at`) VALUES
-(28, 10, 19, '2025-08-28', 1, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:13:20', '2025-08-28 06:01:52'),
-(29, 10, 20, '2025-09-05', 2, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:13:20', '2025-08-28 04:13:20'),
-(30, 11, 21, '2025-09-02', 1, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:22:35', '2025-08-28 04:22:35'),
-(31, 11, 22, '2025-09-05', 2, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:22:35', '2025-08-28 04:22:35'),
-(32, 12, 23, '2025-08-28', 1, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:32:43', '2025-08-28 06:01:04'),
-(33, 12, 24, '2025-09-04', 2, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:32:43', '2025-08-28 04:32:43');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `schedule_slots`
---
-
-CREATE TABLE `schedule_slots` (
-  `id` int UNSIGNED NOT NULL,
-  `day_of_week` enum('monday','tuesday','wednesday','thursday','friday','saturday','sunday') NOT NULL,
-  `start_time` time NOT NULL,
-  `end_time` time NOT NULL,
-  `slot_code` varchar(20) NOT NULL,
-  `popular_slot` tinyint(1) DEFAULT '0',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+INSERT INTO `schedule_sessions` (`id`, `schedule_id`, `time_slot_id`, `session_date`, `session_number`, `week_number`, `start_time`, `end_time`, `teacher_id`, `room_id`, `status`, `cancellation_reason`, `makeup_for_session_id`, `is_makeup_session`, `notes`, `created_at`, `updated_at`, `created_by`) VALUES
+(28, 10, 19, '2025-08-31', 1, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:13:20', '2025-08-31 09:03:26', NULL),
+(29, 10, 20, '2025-09-05', 2, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:13:20', '2025-08-28 04:13:20', NULL),
+(30, 11, 21, '2025-09-02', 1, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:22:35', '2025-08-28 04:22:35', NULL),
+(31, 11, 22, '2025-09-05', 2, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:22:35', '2025-08-28 04:22:35', NULL),
+(32, 12, 23, '2025-08-28', 1, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:32:43', '2025-08-28 06:01:04', NULL),
+(33, 12, 24, '2025-09-04', 2, 1, '09:00:00', '12:00:00', 3, 3, 'scheduled', NULL, NULL, 0, NULL, '2025-08-28 04:32:43', '2025-08-28 04:32:43', NULL);
 
 -- --------------------------------------------------------
 
@@ -1523,7 +1512,6 @@ CREATE TABLE `student_registrations` (
 CREATE TABLE `student_schedule_preferences` (
   `id` int UNSIGNED NOT NULL,
   `student_id` int UNSIGNED NOT NULL,
-  `schedule_slot_id` int UNSIGNED NOT NULL,
   `preference_level` enum('preferred','acceptable','not_available') DEFAULT 'preferred',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -2212,20 +2200,15 @@ ALTER TABLE `schedule_reservations`
 ALTER TABLE `schedule_sessions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_schedule_session` (`schedule_id`,`session_date`,`start_time`),
+  ADD UNIQUE KEY `uniq_schedule_sessions_schedule_date_time` (`schedule_id`,`session_date`,`start_time`,`end_time`),
   ADD KEY `schedule_sessions_schedule_id_foreign` (`schedule_id`),
   ADD KEY `schedule_sessions_time_slot_id_foreign` (`time_slot_id`),
   ADD KEY `schedule_sessions_teacher_id_foreign` (`teacher_id`),
   ADD KEY `schedule_sessions_room_id_foreign` (`room_id`),
   ADD KEY `schedule_sessions_makeup_for_foreign` (`makeup_for_session_id`),
   ADD KEY `idx_session_date` (`session_date`),
-  ADD KEY `idx_session_status` (`status`);
-
---
--- Indexes for table `schedule_slots`
---
-ALTER TABLE `schedule_slots`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `schedule_slots_slot_code_unique` (`slot_code`);
+  ADD KEY `idx_session_status` (`status`),
+  ADD KEY `schedule_sessions_created_by_foreign` (`created_by`);
 
 --
 -- Indexes for table `schedule_students`
@@ -2324,8 +2307,7 @@ ALTER TABLE `student_registrations`
 --
 ALTER TABLE `student_schedule_preferences`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `student_schedule_preferences_student_id_schedule_slot_id_unique` (`student_id`,`schedule_slot_id`),
-  ADD KEY `student_schedule_preferences_schedule_slot_id_foreign` (`schedule_slot_id`);
+  ADD UNIQUE KEY `student_schedule_preferences_student_id_schedule_slot_id_unique` (`student_id`);
 
 --
 -- Indexes for table `teachers`
@@ -2487,7 +2469,7 @@ ALTER TABLE `group_waiting_list`
 -- AUTO_INCREMENT for table `knex_migrations`
 --
 ALTER TABLE `knex_migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `knex_migrations_lock`
@@ -2620,12 +2602,6 @@ ALTER TABLE `schedule_reservations`
 --
 ALTER TABLE `schedule_sessions`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
-
---
--- AUTO_INCREMENT for table `schedule_slots`
---
-ALTER TABLE `schedule_slots`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `schedule_students`
@@ -2945,6 +2921,7 @@ ALTER TABLE `schedule_exceptions`
 -- Constraints for table `schedule_sessions`
 --
 ALTER TABLE `schedule_sessions`
+  ADD CONSTRAINT `schedule_sessions_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `schedule_sessions_makeup_for_foreign` FOREIGN KEY (`makeup_for_session_id`) REFERENCES `schedule_sessions` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `schedule_sessions_room_id_foreign` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `schedule_sessions_schedule_id_foreign` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE CASCADE,
@@ -3027,7 +3004,6 @@ ALTER TABLE `student_registrations`
 -- Constraints for table `student_schedule_preferences`
 --
 ALTER TABLE `student_schedule_preferences`
-  ADD CONSTRAINT `student_schedule_preferences_schedule_slot_id_foreign` FOREIGN KEY (`schedule_slot_id`) REFERENCES `schedule_slots` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `student_schedule_preferences_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE;
 
 --
